@@ -1,0 +1,59 @@
+@import 'variables.css';
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background-color: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    /* App feel */
+    display: flex;
+    flex-direction: column;
+}
+
+/* -- Typography -- */
+h1,
+h2,
+h3 {
+    font-family: var(--font-display);
+    font-weight: 300;
+}
+
+/* -- Utility Classes -- */
+.hidden {
+    display: none !important;
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* -- App Container -- */
+#app {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: var(--spacing-md);
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+}
