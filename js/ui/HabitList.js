@@ -1,9 +1,11 @@
+import { triggerBurst } from './particles.js';
+
 export class HabitList {
     constructor(containerId, habits, context, onDelete) {
         this.container = document.getElementById(containerId);
-        this.habits = habits;
+        this.habits = habits; // Note: In a real app, we'd need reactive status here
         this.context = context || 'maintenance';
-        this.onDelete = onDelete; // Callback for deletion
+        this.onDelete = onDelete;
     }
 
     render() {
@@ -11,31 +13,29 @@ export class HabitList {
 
         const html = this.habits.map(habit => {
             const variation = habit.levels[this.context] || habit.levels['maintenance'];
-            // Safety check for variation existence
             const text = variation ? variation.text : habit.title;
             const duration = variation ? variation.duration : 0;
+            // Determine dynamic color based on context for particles
+            const particleColor = this.context === 'survival' ? '#06b6d4' : '#8b5cf6';
 
             return `
-            <div class="habit-card fade-in" data-id="${habit.id}" style="
-                background: var(--bg-card);
+            <div class="habit-card card-${this.context} fade-in" data-id="${habit.id}" style="
+                /* Removed inline styles that conflict with immersion.css */
                 padding: 1.5rem;
                 margin-bottom: 1rem;
                 display: flex;
                 align-items: center;
                 gap: 1rem;
-                border-radius: var(--radius-md);
-                border: 1px solid rgba(255,255,255,0.05);
-                transition: transform 0.2s;
+                /* Transition handled by CSS class */
             ">
                 <div class="habit-icon" style="
                     font-size: 2rem;
-                    background: rgba(255,255,255,0.05);
                     width: 50px;
                     height: 50px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    border-radius: 12px;
+                    /* BorderRadius handled by CSS class */
                 ">${habit.icon || '✨'}</div>
 
                 <div class="habit-info" style="flex: 1;">
@@ -64,7 +64,7 @@ export class HabitList {
                             cursor: pointer; display: flex; align-items: center; justify-content: center;
                         ">🗑</button>
                     
-                        <button class="check-btn" style="
+                        <button class="check-btn" data-color="${particleColor}" style="
                             width: 32px; 
                             height: 32px; 
                             border-radius: 50%;
@@ -82,12 +82,30 @@ export class HabitList {
 
         // Event Delegation
         this.container.onclick = (e) => {
+            // Delete Handle
             const deleteBtn = e.target.closest('.delete-btn');
             if (deleteBtn) {
                 const id = deleteBtn.dataset.id;
                 if (confirm('¿Eliminar hábito?')) {
                     if (this.onDelete) this.onDelete(id);
                 }
+                return;
+            }
+
+            // Burst Handle
+            const checkBtn = e.target.closest('.check-btn');
+            if (checkBtn) {
+                // Get click coordinates
+                const rect = checkBtn.getBoundingClientRect();
+                const x = rect.left + rect.width / 2;
+                const y = rect.top + rect.height / 2;
+                const color = checkBtn.dataset.color;
+
+                triggerBurst(x, y, color);
+
+                // Toggle Visual State (Mockup)
+                checkBtn.style.background = color;
+                checkBtn.style.border = `2px solid ${color}`;
             }
         };
     }

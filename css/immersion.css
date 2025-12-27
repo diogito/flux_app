@@ -1,0 +1,86 @@
+/* Immersion & Physics (Sprint 5) */
+
+/* Base Transition for Morphing */
+.habit-card {
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    /* Bouncy "Living" feel */
+    will-change: transform, border-radius, background, box-shadow;
+    position: relative;
+    overflow: hidden;
+}
+
+/* --- SURVIVAL MODE (Energy < 30%) --- 
+   Psychology: "Conservation". Round, soft, non-threatening.
+   Visual: Pill shape, smaller scale, darker/calmer colors. 
+*/
+.card-survival {
+    border-radius: 50px;
+    /* Pill Shape */
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.05) 0%, rgba(6, 182, 212, 0.1) 100%);
+    border: 1px solid rgba(6, 182, 212, 0.2);
+    /* Cyan border */
+    transform: scale(0.98);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.card-survival .habit-icon {
+    border-radius: 50%;
+    /* Fully round icon */
+    background: rgba(6, 182, 212, 0.1);
+    color: var(--accent-cyan);
+}
+
+.card-survival h3 {
+    font-size: 0.9rem;
+    /* Smaller title */
+    opacity: 0.8;
+}
+
+/* --- EXPANSION MODE (Energy > 70%) --- 
+   Psychology: "Growth". Angular, sharp, energetic.
+   Visual: Sharp corners, glowing, larger scale. 
+*/
+.card-expansion {
+    border-radius: 16px;
+    /* Sharper */
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.2) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.5);
+    /* Violet border */
+    transform: scale(1.02);
+    box-shadow: 0 8px 32px rgba(139, 92, 246, 0.15);
+    /* Glow */
+}
+
+.card-expansion .habit-icon {
+    border-radius: 8px;
+    /* Square-ish */
+    background: rgba(139, 92, 246, 0.2);
+    color: #fff;
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+}
+
+.card-expansion h3 {
+    font-size: 1.1rem;
+    /* Larger title */
+    font-weight: bold;
+    color: #fff;
+}
+
+/* --- MAINTENANCE (Standard) --- */
+.card-maintenance {
+    border-radius: 20px;
+    background: var(--bg-card);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transform: scale(1);
+}
+
+/* Particle Burst Container (Placeholder for next step) */
+.particle-container {
+    position: absolute;
+    pointer-events: none;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px;
+    height: 200px;
+}
