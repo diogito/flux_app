@@ -41,7 +41,7 @@ export const DEFAULT_HABITS = [
 
 export class HabitsDB {
     constructor(initialData = []) {
-        this.habits = initialData.length > 0 ? initialData : DEFAULT_HABITS;
+        this.habits = initialData;
     }
 
     getAll() {

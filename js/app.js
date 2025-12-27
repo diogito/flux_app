@@ -2,12 +2,11 @@ import { store } from './store.js';
 import { EnergySlider } from './ui/EnergySlider.js';
 import { HabitsDB } from './core/HabitsDB.js';
 import { HabitList } from './ui/HabitList.js';
+import { HabitForm } from './ui/HabitForm.js'; // Import the new Studio
 
 console.log("Flux OS Booting...");
 
 const app = document.getElementById('app');
-// Initialize DB with stored habits or defaults
-const db = new HabitsDB(store.state.habits);
 
 function init() {
     render();
@@ -16,6 +15,9 @@ function init() {
 
 function render(state) {
     const s = state || store.state;
+    // We recreate DB on every render to ensure it has latest habits from store
+    // This is not efficient for large apps but fine for MVP
+    const db = new HabitsDB(s.habits);
 
     // Router Logic
     if (s.today.energyLevel === null) {
@@ -23,7 +25,7 @@ function render(state) {
             renderCheckIn();
         }
     } else {
-        renderDashboard(s);
+        renderDashboard(s, db); // Pass DB to dashboard
     }
 }
 
@@ -38,8 +40,8 @@ function renderCheckIn() {
     slider.render();
 }
 
-function renderDashboard(state) {
-    // Avoid full re-render if unnecessary (MVP: Always re-render)
+function renderDashboard(state, db) {
+    // Basic innerHTML patch
     app.innerHTML = `
         <div class="view-dashboard fade-in">
             <header style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-end;">
@@ -66,6 +68,26 @@ function renderDashboard(state) {
 
             <div id="habits-container"></div>
             
+            <!-- STUDIO ACTION BUTTON (Floating) -->
+            <button id="btnAddHabit" style="
+                position: fixed;
+                bottom: 24px;
+                right: 24px;
+                width: 56px;
+                height: 56px;
+                border-radius: 50%;
+                background: var(--accent-violet);
+                box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+                border: none;
+                color: white;
+                font-size: 24px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 100;
+            ">+</button>
+
             <button id="btnReset" style="
                 margin-top: 3rem; 
                 background: transparent; 
@@ -80,20 +102,34 @@ function renderDashboard(state) {
         </div>
     `;
 
-    // Render Habits List Component
-    // Security check: ensure db exists
-    if (!state.today.energyContext) return; // Should not happen if level is set
+    // Render Habits List
+    if (!state.today.energyContext) return;
 
-    const list = new HabitList('habits-container', db.getAll(), state.today.energyContext);
+    // List Render with Delete Callback
+    const list = new HabitList(
+        'habits-container',
+        db.getAll(),
+        state.today.energyContext,
+        (id) => {
+            console.log("Removing habit:", id);
+            store.removeHabit(id);
+        }
+    );
     list.render();
 
-    // Bind Reset
-    const btnReset = document.getElementById('btnReset');
-    if (btnReset) {
-        btnReset.addEventListener('click', () => {
-            store.resetDay();
+    // Bind Add Button (Opens Modal)
+    document.getElementById('btnAddHabit').addEventListener('click', () => {
+        const form = new HabitForm('habit-modal', (newHabit) => {
+            console.log("Saving new habit:", newHabit);
+            store.addHabit(newHabit);
         });
-    }
+        form.render();
+    });
+
+    // Bind Reset
+    document.getElementById('btnReset').addEventListener('click', () => {
+        store.resetDay();
+    });
 }
 
 // Start

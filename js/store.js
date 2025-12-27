@@ -1,4 +1,5 @@
 import { EnergyEngine } from './core/EnergyEngine.js';
+import { DEFAULT_HABITS } from './core/HabitsDB.js';
 
 const STORAGE_KEY = 'flux_state_v1';
 
@@ -9,13 +10,10 @@ const defaultState = {
     },
     today: {
         date: new Date().toISOString().split('T')[0],
-        energyLevel: null, // 0-100
-        energyContext: null, // 'survival', 'maintenance', 'expansion'
+        energyLevel: null,
+        energyContext: null,
         completedHabits: []
     },
-    // Seed Data (Temporary)
-    // We leave this empty so HabitsDB uses its internal defaults.
-    // In a real app, we would load persistence here.
     habits: []
 };
 
@@ -31,9 +29,15 @@ class Store {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
             const parsed = JSON.parse(stored);
-            return { ...defaultState, ...parsed }; // Merge
+            // Ensure habits exist. If empty array (and not intentionally empty), might want defaults.
+            // But for now, if it's undefined or length 0, we re-seed defaults SO the user isn't stuck with empty list.
+            if (!parsed.habits || parsed.habits.length === 0) {
+                parsed.habits = DEFAULT_HABITS;
+            }
+            return { ...defaultState, ...parsed };
         }
-        return defaultState;
+        // First time load: Use Defaults
+        return { ...defaultState, habits: DEFAULT_HABITS };
     }
 
     save() {
@@ -53,10 +57,7 @@ class Store {
     // -- Actions --
     setEnergy(level) {
         this.state.today.energyLevel = level;
-
-        // Use the Engine!
         this.state.today.energyContext = EnergyEngine.calculateContext(level);
-
         this.save();
     }
 
@@ -67,8 +68,18 @@ class Store {
             energyContext: null,
             completedHabits: []
         };
-        // Also clear habits to trigger DB defaults again if needed, 
-        // though usually we keep user habits. For Demo, this is fine.
+        this.save();
+    }
+
+    addHabit(habit) {
+        if (!this.state.habits) this.state.habits = [];
+        this.state.habits.push(habit);
+        this.save();
+    }
+
+    removeHabit(habitId) {
+        if (!this.state.habits) return;
+        this.state.habits = this.state.habits.filter(h => h.id !== habitId);
         this.save();
     }
 }
