@@ -1,5 +1,6 @@
 import { triggerBurst } from './particles.js';
 import { NeuralChain } from './NeuralChain.js';
+import { FocusSession } from './FocusSession.js';
 
 export class HabitList {
     constructor(containerId, habits, context, onDelete) {
@@ -12,7 +13,6 @@ export class HabitList {
     render() {
         if (!this.container) return;
 
-        // Get completed IDs from global store (source of truth)
         // Get completed IDs from global store (source of truth)
         const completedIds = window.fluxStore ? (window.fluxStore.state.today.completedHabits || []) : [];
 
@@ -48,6 +48,19 @@ export class HabitList {
 
             // Card Opacity/Dimming if done
             const cardOpacity = isCompleted ? 'opacity: 0.6;' : '';
+
+            // Play Button (Only if not done)
+            const playButton = !isCompleted ? `
+                <button class="play-btn" style="
+                    width: 32px; height: 32px; border-radius: 50%;
+                    border: 1px solid var(--accent-cyan); background: rgba(6, 182, 212, 0.1); 
+                    color: var(--accent-cyan);
+                    cursor: pointer; display: flex; align-items: center; justify-content: center;
+                    margin-right: 8px;
+                ">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                </button>
+            ` : '';
 
             return `
             <div class="habit-card card-${this.context} fade-in" data-id="${habit.id}" style="
@@ -89,7 +102,7 @@ export class HabitList {
                         margin-bottom: 0.5rem;
                     ">${duration} min</span>
                     
-                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                    <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
                          <!-- Delete (Trash) -->
                          <button class="delete-btn" data-id="${habit.id}" style="
                             width: 32px; height: 32px; border-radius: 50%;
@@ -97,6 +110,8 @@ export class HabitList {
                             cursor: pointer; display: flex; align-items: center; justify-content: center;
                         ">🗑</button>
                     
+                        ${playButton}
+
                         <button class="check-btn" data-color="${particleColor}" style="
                             width: 32px; 
                             height: 32px; 
@@ -137,47 +152,47 @@ export class HabitList {
                 return;
             }
 
-            // 2. Card Tap Handle (Anywhere on the card)
-            const card = e.target.closest('.habit-card');
+            // Play Handle
+            const playBtn = e.target.closest('.play-btn');
+            if (playBtn) {
+                const card = playBtn.closest('.habit-card');
+                const id = card.dataset.id;
+                const habit = this.habits.find(h => h.id === id); // Find full object
 
-            // Ignore if clicking Delete button explicitly
-            if (e.target.closest('.delete-btn')) return;
-
-            if (card) {
-                const checkBtn = card.querySelector('.check-btn');
-                // Prevent double triggering if they clicked the exact button, 
-                // but the event bubble will hit this anyway. 
-                // We'll trust the logic below.
-
-                if (checkBtn) {
-                    // Get coordinates of the BUTTON, not the click (for consistent particle source)
-                    const rect = checkBtn.getBoundingClientRect();
-                    const x = rect.left + rect.width / 2;
-                    const y = rect.top + rect.height / 2;
-                    const color = checkBtn.dataset.color;
-
-                    // Don't re-animate if already done? Maybe fun to re-animate.
-                    // Using simpler logic: Only complete if not completed? 
-                    // For now, let's allow "checking" it.
-
-                    triggerBurst(x, y, color);
-
-                    // Optimistic UI Update immediately
-                    checkBtn.style.background = color;
-                    checkBtn.style.border = `2px solid ${color}`;
-                    checkBtn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="black" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-
-                    // Store Update
-                    const id = card.dataset.id;
+                // Launch Focus Mode
+                const session = new FocusSession(habit, (completedId) => {
+                    // Start completion Animation logic reused
                     if (window.fluxStore) {
-                        window.fluxStore.completeHabit(id);
-                        setTimeout(() => {
-                            // Re-render only chain? No, store update triggers full render usually.
-                            // But we'll force chain refresh just in case.
-                            const chainContainer = document.getElementById(`chain-${id}`);
-                            if (chainContainer) new NeuralChain(id, chainContainer).render();
-                        }, 100);
+                        window.fluxStore.completeHabit(completedId);
+                        // Maybe show a burst on the card? 
+                        // For now just data update. The list will re-render.
                     }
+                });
+                session.start();
+                return;
+            }
+
+            // Check Handle
+            const checkBtn = e.target.closest('.check-btn');
+            if (checkBtn) {
+                const card = checkBtn.closest('.habit-card');
+                const rect = checkBtn.getBoundingClientRect();
+                const x = rect.left + rect.width / 2;
+                const y = rect.top + rect.height / 2;
+                const color = checkBtn.dataset.color;
+
+                triggerBurst(x, y, color);
+
+                // Optimistic UI Update immediately
+                checkBtn.style.background = color;
+                checkBtn.style.border = `2px solid ${color}`;
+                checkBtn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="black" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+
+                // Store Update
+                const id = card.dataset.id;
+                if (window.fluxStore) {
+                    window.fluxStore.completeHabit(id);
+                    // Re-render handled by store sub
                 }
             }
         };
