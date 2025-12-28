@@ -35,12 +35,16 @@ class Store {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
             const parsed = JSON.parse(stored);
-            if (!parsed.habits || parsed.habits.length === 0) {
+            // [SPRINT 26] Dynamic Habits: 
+            // Only inject defaults if WE DO NOT HAVE A PROFILE yet. 
+            // If we have a profile but no habits, it might be because we haven't generated them yet.
+            // But for backwards compatibility/safety:
+            if ((!parsed.habits || parsed.habits.length === 0) && !parsed.userProfile.onboardingCompleted) {
                 parsed.habits = DEFAULT_HABITS;
             }
             return { ...defaultState, ...parsed };
         }
-        return { ...defaultState, habits: DEFAULT_HABITS };
+        return { ...defaultState, habits: DEFAULT_HABITS }; // Truly fresh start does get defaults (Genesis clears them anyway if needed)
     }
 
     save() {

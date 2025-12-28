@@ -77,4 +77,28 @@ export class CloudCoreService {
             return null;
         }
     }
+
+    static async generateHabits(profile) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/neural-bridge`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: 'generate_habits',
+                    profile
+                })
+            });
+
+            if (!response.ok) {
+                console.error("Cloud Error", response.status);
+                return null;
+            }
+            const data = await response.json();
+            // Ensure unique IDs
+            return data.habits.map((h, i) => ({ ...h, id: `cloud_${Date.now()}_${i}` }));
+        } catch (e) {
+            console.warn("Cloud Habit Gen Failed:", e);
+            return null;
+        }
+    }
 }

@@ -55,6 +55,20 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
                         Notes: {dayData.get('note', 'None')}.
                         Synthesize a brief conclusion (max 20 words) in Spanish.
                     """
+                
+                elif req_type == 'generate_habits':
+                    profile = data.get('profile', {})
+                    
+                    system_prompt = """You are The Architect. Design 3 powerful daily micro-habits based on the user's Archetype and North Star.
+                    Constraint: Each habit title must be VERY short (max 4 words). in Spanish.
+                    Output JSON: { "habits": [ { "title": "string", "id": "string", "icon": "emoji" } ] }"""
+                    
+                    user_msg = f"""
+                        User: {profile.get('name')}
+                        Archetype: {profile.get('archetype')}
+                        North Star: {profile.get('northStar')}
+                        Chronotype: {profile.get('chronotype')}
+                    """
                 else:
                     # Default Analysis
                     energy = data.get('energy_level', 50)

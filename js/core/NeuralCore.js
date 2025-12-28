@@ -158,6 +158,44 @@ export class NeuralCore {
             return null;
         }
     }
+
+    /**
+     * [SPRINT 26] The Architect
+     * Generates personalized habits based on profile.
+     */
+    async generateHabits(profile) {
+        if (!this.isReady || !this.engine) return null;
+
+        const systemPrompt = `You are The Architect. Design 3 powerful daily micro-habits based on the user's Archetype and North Star.
+        Constraint: Each habit title must be VERY short (max 4 words). in Spanish.
+        Output JSON: { "habits": [ { "title": "string", "id": "string", "icon": "emoji" } ] }`;
+
+        const userPrompt = `
+            User: ${profile.name}
+            Archetype: ${profile.archetype}
+            North Star: ${profile.northStar}
+            Chronotype: ${profile.chronotype}
+        `;
+
+        try {
+            const response = await this.engine.chat.completions.create({
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userPrompt }
+                ],
+                response_format: { type: "json_object" },
+                temperature: 0.8,
+                max_tokens: 150
+            });
+
+            const data = JSON.parse(response.choices[0].message.content);
+            // Ensure unique IDs
+            return data.habits.map((h, i) => ({ ...h, id: `auto_${Date.now()}_${i}` }));
+        } catch (e) {
+            console.warn("Habit Generation Failed", e);
+            return null;
+        }
+    }
 }
 
 export const instance = new NeuralCore();

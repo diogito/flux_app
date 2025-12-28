@@ -323,10 +323,99 @@ export function showGenesisModal(onComplete) {
         store.updateProfile(tempProfile);
 
         // Sync new profile to cloud if authenticated
+        // Sync new profile to cloud if authenticated
         if (tempProfile.id) {
             Supabase.upsertProfile(tempProfile);
         }
 
+        // [SPRINT 26] The Forge - AI Habit Generation
+        // Only run if this is a NEW user (not login restore)
+        if (!tempProfile.onboardingCompleted && !store.state.habits.length) {
+            enterTheForge();
+        } else {
+            closeModal();
+        }
+    };
+
+    const enterTheForge = async () => {
+        modal.innerHTML = `
+            <div class="genesis-content">
+                <div class="genesis-avatar-lg" style="animation: genesisPulse 1s infinite;"></div>
+                <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--accent-violet);">La Forja</h2>
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">
+                    Diseñando protocolos para <strong>${tempProfile.archetype}</strong>...
+                </p>
+                <div id="forge-status" style="font-size: 0.9rem; color: #666;">Analizando Estrella Polar...</div>
+            </div>
+        `;
+
+        // Lazy Load AI
+        import('../core/NeuralCore.js').then(async ({ NeuralCoreService }) => {
+            import('../core/CloudCore.js').then(async ({ CloudCoreService }) => {
+
+                // 1. Try Local
+                let habits = await NeuralCoreService.generateHabits(tempProfile);
+
+                // 2. Try Cloud
+                if (!habits) {
+                    document.getElementById('forge-status').innerText = "Contactando Córtex Nube...";
+                    habits = await CloudCoreService.generateHabits(tempProfile);
+                }
+
+                if (habits && habits.length > 0) {
+                    showHabitSelection(habits);
+                } else {
+                    // Fallback to Defaults
+                    alert("No pudimos contactar a la IA. Cargando protocolos estándar.");
+                    closeModal();
+                }
+            });
+        });
+    };
+
+    const showHabitSelection = (habits) => {
+        modal.innerHTML = `
+            <div class="genesis-content" style="max-width: 800px;">
+                <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--accent-cyan);">Protocolos Diseñados</h2>
+                <p style="color: var(--text-muted); margin-bottom: 2rem;">
+                    Basado en tu arquetipo <em>${tempProfile.archetype}</em>
+                </p>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    ${habits.map(h => `
+                        <div style="
+                            background: rgba(255,255,255,0.05); 
+                            padding: 1.5rem; 
+                            border-radius: 12px; 
+                            border: 1px solid var(--accent-violet);
+                            text-align: center;
+                        ">
+                            <div style="font-size: 2rem; margin-bottom: 10px;">${h.icon || '✨'}</div>
+                            <div style="font-weight: bold; color: #fff;">${h.title}</div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div style="margin-top: 1rem;">
+                    <button id="btn-accept-habits" class="genesis-btn">Aceptar Protocolos</button>
+                    <button id="btn-retry-habits" style="background:none; border:none; color: #666; margin-left: 20px; cursor: pointer;">Regenerar</button>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('btn-accept-habits').onclick = () => {
+            // Clear existing defaults (if any) and add new
+            store.state.habits = [];
+            habits.forEach(h => store.addHabit(h));
+            closeModal();
+        };
+
+        document.getElementById('btn-retry-habits').onclick = () => {
+            enterTheForge(); // Loop
+        };
+    };
+
+    const closeModal = () => {
         // Exit
         modal.style.opacity = '0';
         setTimeout(() => {
