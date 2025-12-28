@@ -1,24 +1,24 @@
-export const CloudCoreService = {
-    /**
-     * Fallback Analysis via Cloud API
-     * Used when WebGPU is not available.
-     */
-    async analyzeState(energyLevel, tags, note, historyContext = "") {
-        console.log("☁️ CloudCore: Contacting Mother Ship...");
+export const API_BASE = 'http://localhost:8000/api';
+
+export class CloudCoreService {
+
+    static async analyzeState(energyLevel, tags, note, history = []) {
+        console.log("☁️ Calling Cloud Synapse...");
 
         try {
-            const response = await fetch('/api/neural-bridge', {
+            const response = await fetch(`${API_BASE}/neural-bridge`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer FLUX_DEMO_KEY'
+                    'Authorization': 'Bearer FLUX_DEMO_KEY' // Mock Auth
                 },
                 body: JSON.stringify({
+                    type: 'analysis',
                     energy_level: energyLevel,
-                    semantic_tags: tags,
-                    journal_note: note,
-                    history_context: historyContext, // [NEW] RAG
-                    client_timestamp: Date.now()
+                    tags: tags,
+                    note: note,
+                    history: history,
+                    format: 'json'
                 })
             });
 
@@ -27,27 +27,17 @@ export const CloudCoreService = {
             }
 
             const data = await response.json();
-
-            // Normalize response to match NeuralCore format
-            return {
-                context: data.analysis.context,
-                reasoning: data.analysis.reasoning,
-                actionable_tip: data.analysis.actionable_tip,
-                source: "cloud" // Metadata
-            };
+            return data;
 
         } catch (error) {
-            console.error("☁️ CloudCore Failed:", error);
-            throw error; // Re-throw to trigger Heuristic Fallback
+            console.error("Cloud Bridge Failed:", error);
+            throw error; // Propagate to trigger manual fallback
         }
-    },
+    }
 
-    /**
-     * Micro-Coaching Fallback (Server-side)
-     */
-    async generateMicroCoaching(habitName, energyLevel) {
+    static async generateMicroCoaching(habitName, energyLevel) {
         try {
-            const response = await fetch('/api/neural-bridge', {
+            const response = await fetch(`${API_BASE}/neural-bridge`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -65,4 +55,26 @@ export const CloudCoreService = {
             return null;
         }
     }
-};
+
+    static async generateDailySummary(profile, dayData, history) {
+        try {
+            const response = await fetch(`${API_BASE}/neural-bridge`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: 'daily_summary',
+                    profile,
+                    dayData,
+                    history
+                })
+            });
+
+            if (!response.ok) return null;
+            const data = await response.json();
+            return data.message;
+        } catch (e) {
+            console.warn("Cloud Summary Failed:", e);
+            return null;
+        }
+    }
+}

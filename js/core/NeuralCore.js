@@ -98,6 +98,43 @@ export class NeuralCore {
             return null;
         }
     }
+
+    /**
+     * Generates an End-of-Day Summary based on energy and habits.
+     */
+    async generateDailySummary(profile, dayData, history) {
+        if (!this.isReady || !this.engine) return null;
+
+        const systemPrompt = "You are a wise mentor. Summarize the user's day in ONE insightful sentence (Spanish). Focus on the relationship between Energy and Action.";
+        const userPrompt = `
+            Profile: ${profile.name} (Chronotype: ${profile.chronotype || 'Unknown'}).
+            Start Energy: ${dayData.energyLevel}% (${dayData.energyContext}).
+            Habits Completed: ${dayData.completedHabits.length} / ${dayData.totalHabits}.
+            Notes: "${dayData.note || 'None'}".
+            History Context: ${history.length} recent events.
+            
+            Synthesize a brief, encouraging conclusion (max 20 words).
+            JSON Output: { "message": "string" }
+        `;
+
+        try {
+            const response = await this.engine.chat.completions.create({
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userPrompt }
+                ],
+                response_format: { type: "json_object" },
+                temperature: 0.7,
+                max_tokens: 100
+            });
+
+            const data = JSON.parse(response.choices[0].message.content);
+            return data.message;
+        } catch (e) {
+            console.warn("Daily Summary Failed", e);
+            return null;
+        }
+    }
 }
 
 export const instance = new NeuralCore();

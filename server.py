@@ -37,6 +37,18 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
                     energy = data.get('energyLevel', 50)
                     system_prompt = "You are a motivational coach. Output a single short sentence based on energy level (max 10 words) in SPANISH. JSON Output: { \"message\": \"string\" }"
                     user_msg = f"User completed: {habit}. Energy: {energy}%. Praise them in Spanish."
+                
+                elif req_type == 'daily_summary':
+                    profile = data.get('profile', {})
+                    dayData = data.get('dayData', {})
+                    
+                    system_prompt = "You are a wise mentor. Summarize the user's day in ONE insightful sentence (Spanish). Focus on the relationship between Energy and Action. JSON Output: { \"message\": \"string\" }"
+                    user_msg = f"""
+                        Start Energy: {dayData.get('energyLevel')}%.
+                        Completed: {len(dayData.get('completedHabits', []))} habits.
+                        Notes: {dayData.get('note', 'None')}.
+                        Synthesize a brief conclusion (max 20 words) in Spanish.
+                    """
                 else:
                     # Default Analysis
                     energy = data.get('energy_level', 50)
