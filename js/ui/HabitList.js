@@ -121,6 +121,11 @@ export class HabitList {
                 triggerBurst(x, y, color);
                 checkBtn.style.background = color;
                 checkBtn.style.border = `2px solid ${color}`;
+                checkBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="black" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                `;
 
                 // 2. Trigger Logic (Store + Analytics)
                 // We need the ID. The button is sibling to detail but inside the card which has data-id
