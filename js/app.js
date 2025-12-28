@@ -5,6 +5,7 @@ import { HabitList } from './ui/HabitList.js';
 import { showNegotiationModal } from './ui/NegotiationModal.js';
 import { showWeeklyReport } from './ui/WeeklyReportModal.js';
 import { InsightEngine } from './core/InsightEngine.js';
+import { NeuralCoreService } from './core/NeuralCore.js';
 
 // Expose for Components
 window.fluxStore = store;
@@ -70,27 +71,34 @@ function renderCheckIn() {
         `;
     }
 
-    const slider = new EnergySlider('energy-view', (val, tags, note) => {
-        const previousContext = store.state.today.energyContext;
+    const slider = new EnergySlider('energy-view', async (val, tags, note) => {
+        // 1. Show Neural Interface
+        const overlay = document.getElementById('neural-status');
+        const progress = document.getElementById('neural-progress');
+        overlay.style.display = 'flex';
 
-        // 1. Commit new energy physics + Journal Note
-        store.setEnergy(val, tags, note);
+        try {
+            // 2. Wake up the Brain (Lazy Load)
+            await NeuralCoreService.init((msg) => {
+                progress.innerText = msg;
+            });
 
-        const newContext = store.state.today.energyContext;
+            progress.innerText = "Analizando psicometría...";
 
-        // 2. AI Negotiation Trigger
-        if (newContext === 'survival' && previousContext !== 'survival') {
-            console.log("Triggering Negotiation...");
-            showNegotiationModal(
-                store.state.habits,
-                () => {
-                    console.log("Negotiation Accepted: Survival Mode active.");
-                },
-                () => {
-                    console.log("Negotiation Overridden: Forcing Maintenance.");
-                    store.setContextOverride('maintenance');
-                }
-            );
+            // 3. Ask the AI
+            const analysis = await NeuralCoreService.analyzeState(val, tags, note);
+            console.log("🧠 Neural Decision:", analysis);
+
+            // 4. Commit to Store
+            // We pass the AI's decision directly, bypassing the rigid EnergyEngine rules
+            store.setNeuralState(val, analysis);
+
+        } catch (err) {
+            console.error("Neural Failure:", err);
+            alert("Error conectando con el Córtex. Usando modo manual.");
+            store.setEnergy(val, tags, note); // Fallback to heuristic
+        } finally {
+            overlay.style.display = 'none';
         }
     });
 
