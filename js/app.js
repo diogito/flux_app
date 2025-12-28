@@ -7,7 +7,7 @@ import { showWeeklyReport } from './ui/WeeklyReportModal.js';
 import { showSettings } from './ui/SettingsModal.js'; // [NEW] Import Settings
 import { InsightEngine } from './core/InsightEngine.js';
 import { NeuralCoreService } from './core/NeuralCore.js';
-import { CloudCoreService } from './core/CloudCore.js'; // [NEW] Cloud Bridge
+import { CloudCoreService } from './core/CloudCore.js'; // Cloud Bridge
 import { AnalyticsDB } from './core/AnalyticsDB.js'; // [FIX] Missing Import
 
 // Expose for Components
@@ -77,6 +77,8 @@ function renderCheckIn() {
                 gap: 12px;
                 align-items: center;
                 justify-content: center;
+                z-index: 10;
+                position: relative;
             ">
                 <span style="font-size: 1.5rem;">${icon}</span>
                 <div>
@@ -216,17 +218,30 @@ function renderDashboard(state, db) {
         <div class="view-dashboard fade-in">
             <header style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-end;">
                 <div>
-                    <span id="context-badge" style="
-                        color: var(--accent-cyan); 
-                        text-transform: uppercase; 
-                        font-size: 0.7rem; 
-                        letter-spacing: 2px;
-                        border: 1px solid var(--accent-cyan);
-                        padding: 4px 8px;
-                        border-radius: 4px;
-                        display: inline-block;
-                        margin-bottom: 8px;
-                    ">Modo ${state.today.energyContext}</span>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span id="context-badge" style="
+                            color: var(--accent-cyan); 
+                            text-transform: uppercase; 
+                            font-size: 0.7rem; 
+                            letter-spacing: 2px;
+                            border: 1px solid var(--accent-cyan);
+                            padding: 4px 8px;
+                            border-radius: 4px;
+                            display: inline-block;
+                            margin-bottom: 8px;
+                        ">Modo ${state.today.energyContext}</span>
+                        <!-- Settings Gear -->
+                        <button id="btnSettings" style="
+                            background: none; 
+                            border: none; 
+                            color: var(--text-muted); 
+                            cursor: pointer; 
+                            opacity: 0.6;
+                            padding: 0;
+                            margin-bottom: 8px; 
+                            font-size: 1rem;
+                        ">⚙️</button>
+                    </div>
                     <h1>Hoy</h1>
                 </div>
                 <div class="battery-indicator" style="text-align: right; display: flex; flex-direction: column; align-items: flex-end;">
@@ -322,6 +337,40 @@ function renderDashboard(state, db) {
     if (btnReport) {
         btnReport.addEventListener('click', () => {
             showWeeklyReport();
+        });
+    }
+
+    // [NEW] Bind Settings Button
+    const btnSettings = document.getElementById('btnSettings');
+    if (btnSettings) {
+        btnSettings.addEventListener('click', () => {
+            showSettings(
+                // Export Action
+                () => {
+                    const data = {
+                        profile: store.state.userProfile,
+                        habits: store.state.habits,
+                        history: AnalyticsDB.getAllEvents() // Grab all raw events
+                    };
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `flux_data_${new Date().toISOString().slice(0, 10)}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+
+                    showToast("✅ Datos exportados correctamente");
+                },
+                // Reset Action
+                () => {
+                    localStorage.clear();
+                    window.location.reload();
+                }
+            );
         });
     }
 }
