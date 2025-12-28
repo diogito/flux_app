@@ -55,6 +55,8 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
                     model_name = os.environ.get("OLLAMA_MODEL", "llama3")
                     api_url = os.environ.get("OLLAMA_URL", "http://localhost:11434/api/chat")
                     
+                    print(f"🔄 Bridging to Ollama: {api_url} (Model: {model_name})")
+                    
                     req = urllib.request.Request(
                         api_url,
                         data=json.dumps({
@@ -70,7 +72,8 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
                         method="POST"
                     )
                     
-                    with urllib.request.urlopen(req) as f:
+                    # Set timeout to 5 seconds to prevent hanging
+                    with urllib.request.urlopen(req, timeout=5) as f:
                         response_body = f.read().decode('utf-8')
                         ollama_data = json.loads(response_body)
                         # Ollama returns content in 'message.content'
@@ -81,6 +84,8 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
                             "model_used": f"ollama-{model_name}",
                             "analysis": ai_json
                         }
+                        print("✅ Ollama Response Received!")
+
 
                 # --- OPTION B: OPENAI (Backup) ---
                 else: 
