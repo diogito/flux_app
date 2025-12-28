@@ -11,14 +11,29 @@ export class EnergyEngine {
      * @param {number} level 0-100
      * @returns {string} 'survival' | 'maintenance' | 'expansion'
      */
-    static calculateContext(level) {
+    static calculateContext(level, tags = []) {
         // Sanity check
         if (typeof level !== 'number') return 'maintenance';
 
-        // The "Elastic" Logic
-        if (level <= 30) return 'survival';
-        if (level >= 70) return 'expansion';
-        return 'maintenance';
+        // 1. Biological Foundation (The Number)
+        let context = 'maintenance';
+        if (level <= 30) context = 'survival';
+        if (level >= 70) context = 'expansion';
+
+        // 2. Cognitive Layer (The Semantic Override)
+        // Rule A: Willpower Override ("I'm tired but motivated")
+        if (tags.includes('Motivado') && context === 'survival') {
+            console.log("[EnergyEngine] Semantic Override: Motivated -> Bumping to Maintenance");
+            return 'maintenance';
+        }
+
+        // Rule B: Health Safety ("I'm manic but sick")
+        if ((tags.includes('Enfermo') || tags.includes('Mala noche')) && context === 'expansion') {
+            console.log("[EnergyEngine] Semantic Override: Health Risk -> Capping at Maintenance");
+            return 'maintenance';
+        }
+
+        return context;
     }
 
     /**

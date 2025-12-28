@@ -53,15 +53,17 @@ class Store {
     }
 
     // -- Actions --
-    setEnergy(level, note = '') {
+    setEnergy(level, tags = [], note = '') {
         this.state.today.energyLevel = level;
-        this.state.today.energyContext = EnergyEngine.calculateContext(level);
+        // The Brain: Use Tags to refine Context (Congruence Check)
+        this.state.today.energyContext = EnergyEngine.calculateContext(level, tags);
 
         // Log to Analytics (The Brain)
         AnalyticsDB.logEvent('ENERGY_CHECK_IN', {
             level,
             context: this.state.today.energyContext,
-            note // <--- The Cognitive Input
+            tags,
+            note
         });
 
         this.save();
