@@ -105,7 +105,8 @@ function renderCheckIn() {
 
         } catch (err) {
             console.error("Neural Failure:", err);
-            alert("Error conectando con el Córtex. Usando modo manual.");
+            // Show specific error for debugging (e.g. "WebGPU not supported")
+            alert(`Error de Córtex: ${err.message || err}. Usando modo manual.`);
             store.setEnergy(val, tags, note); // Fallback to heuristic
         } finally {
             overlay.style.display = 'none';

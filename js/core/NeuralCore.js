@@ -1,7 +1,7 @@
 import { CreateMLCEngine } from "https://esm.run/@mlc-ai/web-llm";
 
-// Using Phi-3-mini for a balance of speed and intelligence (~2.3GB download)
-const MODEL_ID = "Phi-3.5-mini-instruct-q4f16_1-MLC";
+// Using Qwen2-1.5B for maximum mobile compatibility (~1GB VRAM, High Speed)
+const MODEL_ID = "Qwen2-1.5B-Instruct-q4f16_1-MLC";
 
 export class NeuralCore {
     constructor() {
