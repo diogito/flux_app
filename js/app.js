@@ -7,6 +7,7 @@ import { showWeeklyReport } from './ui/WeeklyReportModal.js';
 import { InsightEngine } from './core/InsightEngine.js';
 import { NeuralCoreService } from './core/NeuralCore.js';
 import { CloudCoreService } from './core/CloudCore.js'; // [NEW] Cloud Bridge
+import { AnalyticsDB } from './core/AnalyticsDB.js'; // [FIX] Missing Import
 
 // Expose for Components
 window.fluxStore = store;
