@@ -119,14 +119,19 @@ function renderCheckIn() {
 
             // Graceful Error Handling
             window.fluxDisableNeural = true; // Don't crash again
-            progress.style.color = 'var(--accent-orange, #f97316)';
-            progress.innerText = "⚠️ Córtex inestable. Activando protocolo manual...";
+            progress.style.color = 'var(--text-warning, #fca5a5)';
 
-            // Wait 2s so user sees the message
+            if (err.toString().includes("GPU")) {
+                progress.innerText = "⚠️ GPU no compatible. Activando Modo Ligero...";
+            } else {
+                progress.innerText = "⚠️ Córtex inestable. Activando Modo Ligero...";
+            }
+
+            // Wait 1.5s so user sees the switch
             setTimeout(() => {
                 store.setEnergy(val, tags, note); // Fallback to heuristic
                 overlay.style.display = 'none';
-            }, 2500);
+            }, 1500);
         }
     });
 
