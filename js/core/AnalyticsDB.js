@@ -1,7 +1,4 @@
-/**
- * AnalyticsDB - The Memory of the AI
- * Stores immutable events to track user behavior contextually.
- */
+import { Supabase } from './SupabaseClient.js';
 
 const STORAGE_KEY = 'flux_analytics_v1';
 
@@ -18,6 +15,14 @@ export const AnalyticsDB = {
         events.push(event);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
         console.log(`[Analytics] Logged: ${type}`, event);
+
+        // [NEW] Cloud Sync (Fire and Forget)
+        Supabase.logEvent({
+            type: type,
+            data: payload,
+            timestamp: new Date(event.timestamp).toISOString()
+        }).catch(err => console.warn("Cloud Log Failed", err));
+
         return event;
     },
 

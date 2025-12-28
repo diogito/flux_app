@@ -11,6 +11,7 @@ import { NeuralCoreService } from './core/NeuralCore.js';
 import { CloudCoreService } from './core/CloudCore.js';
 import { AnalyticsDB } from './core/AnalyticsDB.js';
 import { HabitForm } from './ui/HabitForm.js';
+import { Supabase } from './core/SupabaseClient.js'; // [NEW] RAG Source
 
 // Expose for Components
 window.fluxStore = store;
@@ -142,16 +143,62 @@ function renderCheckIn() {
                 if (title) title.innerText = "Procesando";
                 if (core) core.classList.add('thinking');
 
+                if (core) core.classList.add('thinking');
+
                 // 3. Ask the AI (Edge First) + RAG (Memory)
-                const history = AnalyticsDB.getRecentEnergyContext(5); // Last 5 days
-                console.log("📜 RAG Context:", history);
+                let history;
+                try {
+                    // [RAG] Try Cloud Memory first (20 items)
+                    const cloudHistory = await Supabase.getHistory(20);
+                    if (cloudHistory && cloudHistory.length > 0) {
+                        history = cloudHistory.map(e => {
+                            const date = new Date(e.timestamp).toLocaleDateString();
+                            const p = e.data || {};
+                            return `[${date}] Type: ${e.type} | Info: ${JSON.stringify(p)}`;
+                        }).join('\n');
+                        console.log("📜 RAG Context (Cloud):", history.length + " events");
+                    } else {
+                        throw new Error("No cloud history");
+                    }
+                } catch (ragErr) {
+                    // [Fallback] Local Memory (5 items)
+                    history = AnalyticsDB.getRecentEnergyContext(5);
+                    console.log("📜 RAG Context (Local Fallback):", history);
+                }
 
-                const analysis = await NeuralCoreService.analyzeState(val, tags, note, history);
-                console.log("🧠 Neural Decision:", analysis);
+                // Helper to normalize analysis data
+                const normalizeAnalysis = (raw) => {
+                    // Check if it's nested (Cloud format)
+                    if (raw && raw.analysis) return raw.analysis;
+                    return raw;
+                };
 
-                // 4. Commit to Store
-                store.setNeuralState(val, analysis, tags, note);
-                if (overlay) overlay.classList.add('hidden');
+                const safeAnalysis = normalizeAnalysis(analysis);
+                console.log("🧠 Normalized Decision:", safeAnalysis);
+
+                // 4. THE NEGOTIATION (Sprint 24)
+                if (val <= 35) { // Threshold for Survival
+                    const db = new HabitsDB(window.fluxStore.state.habits);
+
+                    showNegotiationModal(
+                        db.getAll(),
+                        async () => {
+                            console.log("🤝 User accepted Survival Plan.");
+                            store.setNeuralState(val, safeAnalysis, tags, note);
+                            if (overlay) overlay.classList.add('hidden');
+                            triggerVoiceWelcome(safeAnalysis.context);
+                        },
+                        async () => {
+                            console.log("💪 User forced Maintenance Mode.");
+                            store.setContextOverride('maintenance');
+                            store.setNeuralState(val, { ...safeAnalysis, context: 'maintenance' }, tags, note);
+                            if (overlay) overlay.classList.add('hidden');
+                        }
+                    );
+                } else {
+                    store.setNeuralState(val, safeAnalysis, tags, note);
+                    if (overlay) overlay.classList.add('hidden');
+                }
             };
 
             const handleAiError = async (err) => {
@@ -161,35 +208,89 @@ function renderCheckIn() {
                 if (title) title.innerText = "Enlace Remoto";
                 if (progress) {
                     progress.innerText = "⚠️ Error Local. Conectando Nube...";
-                    progress.style.color = 'var(--accent-cyan)'; // Blue for Cloud
+                    progress.style.color = 'var(--accent-cyan)';
                 }
                 if (core) core.classList.add('thinking');
 
                 try {
-                    // 3b. Ask the Cloud (Plan B)
-                    const history = AnalyticsDB.getRecentEnergyContext(5);
-                    const cloudAnalysis = await CloudCoreService.analyzeState(val, tags, note, history);
-                    console.log("☁️ Cloud Decision:", cloudAnalysis);
+                    const cloudResponse = await CloudCoreService.analyzeState(val, tags, note, history);
+                    console.log("☁️ Cloud Decision Raw:", cloudResponse);
 
-                    store.setNeuralState(val, cloudAnalysis, tags, note);
-                    if (overlay) overlay.classList.add('hidden');
+                    // Unpack Cloud Response
+                    const cloudAnalysis = cloudResponse.analysis || cloudResponse;
+                    console.log("☁️ Cloud Analysis Unpacked:", cloudAnalysis);
+
+                    if (val <= 35) {
+                        const db = new HabitsDB(window.fluxStore.state.habits);
+                        showNegotiationModal(db.getAll(),
+                            () => {
+                                store.setNeuralState(val, cloudAnalysis, tags, note);
+                                if (overlay) overlay.classList.add('hidden');
+                                triggerVoiceWelcome(cloudAnalysis.context);
+                            },
+                            () => {
+                                store.setNeuralState(val, { ...cloudAnalysis, context: 'maintenance' }, tags, note);
+                                if (overlay) overlay.classList.add('hidden');
+                            }
+                        );
+                    } else {
+                        store.setNeuralState(val, cloudAnalysis, tags, note);
+                        if (overlay) overlay.classList.add('hidden');
+                    }
 
                 } catch (cloudErr) {
                     console.error("🔥 Total Failure (Edge + Cloud):", cloudErr);
 
-                    // -- TOTAL FALLBACK (Heuristic) --
                     if (progress) {
                         progress.style.color = 'var(--text-warning, #fca5a5)';
                         progress.innerText = "⚠️ Sin conexión. Activando Modo Manual...";
                     }
                     if (core) core.classList.remove('thinking');
 
-                    window.fluxDisableNeural = true; // Stop trying
+                    window.fluxDisableNeural = true;
 
+                    if (val <= 35) {
+                        const db = new HabitsDB(window.fluxStore.state.habits);
+                        showNegotiationModal(db.getAll(),
+                            () => {
+                                store.setEnergy(val, tags, note);
+                                if (overlay) overlay.classList.add('hidden');
+                                triggerVoiceWelcome('survival');
+                            },
+                            () => {
+                                store.setContextOverride('maintenance');
+                                store.setEnergy(val, tags, note);
+                                if (overlay) overlay.classList.add('hidden');
+                            }
+                        );
+                    } else {
+                        setTimeout(() => {
+                            store.setEnergy(val, tags, note);
+                            if (overlay) overlay.classList.add('hidden');
+                        }, 1500);
+                    }
+                }
+            };
+
+            // Voice Helper
+            const triggerVoiceWelcome = (context) => {
+                if (context === 'survival') {
                     setTimeout(() => {
-                        store.setEnergy(val, tags, note);
-                        if (overlay) overlay.classList.add('hidden');
-                    }, 1500);
+                        const spoken = sessionStorage.getItem('flux_survival_spoken');
+                        if (!spoken) {
+                            // Visual Feedback
+                            const avatar = document.getElementById('neural-avatar');
+                            if (avatar) avatar.classList.add('speaking');
+
+                            const msg = new SpeechSynthesisUtterance("Modo Supervivencia Activado. Solo lo esencial.");
+                            msg.lang = 'es-ES';
+                            msg.onend = () => {
+                                if (avatar) avatar.classList.remove('speaking');
+                            };
+                            window.speechSynthesis.speak(msg);
+                            sessionStorage.setItem('flux_survival_spoken', 'true');
+                        }
+                    }, 500);
                 }
             };
 
@@ -228,6 +329,15 @@ function renderDashboard(state, db) {
                             padding: 4px 8px;
                             border-radius: 4px;
                             display: inline-block;
+                        <span id="context-badge" style="
+                            color: var(--accent-cyan); 
+                            text-transform: uppercase; 
+                            font-size: 0.7rem; 
+                            letter-spacing: 2px;
+                            border: 1px solid var(--accent-cyan);
+                            padding: 4px 8px;
+                            border-radius: 4px;
+                            display: inline-block;
                             margin-bottom: 8px;
                         ">Modo ${state.today.energyContext}</span>
                         <!-- Settings Gear -->
@@ -242,7 +352,24 @@ function renderDashboard(state, db) {
                             font-size: 1rem;
                         ">⚙️</button>
                     </div>
-                    <h1>Hoy</h1>
+                    <!-- [SPRINT 24] Dynamic Insight Header -->
+                    <div style="display: flex; align-items: center;">
+                        <div id="neural-avatar" class="mini-avatar"></div>
+                        <h1 class="fade-in" style="font-size: 2rem; line-height: 1.1;">
+                            ${(() => {
+            const h = new Date().getHours();
+            const c = state.today.energyContext;
+
+            if (c === 'survival') return "Modo Refugio";
+            if (c === 'expansion') return "A Conquistar";
+            if (c === 'maintenance') return "Ritmo Constante";
+
+            if (h < 12) return "Buenos Días";
+            if (h < 20) return "Buenas Tardes";
+            return "Buenas Noches";
+        })()}
+                        </h1>
+                    </div>
                 </div>
                 <div class="battery-indicator" style="text-align: right; display: flex; flex-direction: column; align-items: flex-end;">
                     <div style="display: flex; align-items: center; gap: 1rem;">
@@ -317,6 +444,8 @@ function renderDashboard(state, db) {
 
                     if (encouragement) {
                         showToast(encouragement);
+                        // [SPRINT 24] Voice Activation
+                        NeuralCoreService.speak(encouragement);
                     }
                 } catch (err) {
                     console.warn("AI Coach failed:", err);
@@ -388,11 +517,17 @@ function renderDashboard(state, db) {
             // Gather Data
             const profile = store.state.userProfile;
             const history = AnalyticsDB.getRecentEnergyContext(5);
+
+            // [FIX] Correctly identify completed habits by checking ID against store
+            const completedIds = store.state.today.completedHabits || [];
+            const allHabits = db.getAll();
+            const completedHabitsList = allHabits.filter(h => completedIds.includes(h.id));
+
             const dayData = {
                 energyLevel: state.today.energyLevel,
                 energyContext: state.today.energyContext,
-                totalHabits: db.getAll().length,
-                completedHabits: db.getAll().filter(h => h.completed),
+                totalHabits: allHabits.length,
+                completedHabits: completedHabitsList,
                 note: state.today.note
             };
 

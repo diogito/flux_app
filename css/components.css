@@ -83,10 +83,27 @@
     transition: transform 0.1s, box-shadow 0.2s;
     margin-top: -14px;
     /* Center on track (16px track / 2 - 44px thumb / 2) -> 8 - 22 = -14 */
+    animation: thumbBreathe 4s ease-in-out infinite;
+}
+
+@keyframes thumbBreathe {
+
+    0%,
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 20px var(--thumb-color, rgba(255, 255, 255, 0.5));
+    }
+
+    50% {
+        transform: scale(1.1);
+        box-shadow: 0 0 35px var(--thumb-color, rgba(255, 255, 255, 0.8));
+    }
 }
 
 .slider-input::-webkit-slider-thumb:active {
     transform: scale(1.15);
+    animation: none;
+    /* Pause breathing on interaction */
 }
 
 /* Firefox Support */
@@ -104,6 +121,7 @@
     border-radius: 50%;
     background: var(--bg-primary);
     box-shadow: 0 0 20px var(--thumb-color, rgba(255, 255, 255, 0.5));
+    animation: thumbBreathe 4s ease-in-out infinite;
 }
 
 /* Labels below slider */

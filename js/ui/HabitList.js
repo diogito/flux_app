@@ -12,7 +12,16 @@ export class HabitList {
     }
 
     render() {
-        if (!this.container) return;
+        if (!this.container) {
+            console.error("HabitList Error: Container not found");
+            return;
+        }
+
+        console.log("Rendering HabitList:", {
+            count: this.habits.length,
+            context: this.context,
+            habits: this.habits
+        });
 
         // Get completed IDs from global store (source of truth)
         const completedIds = window.fluxStore ? (window.fluxStore.state.today.completedHabits || []) : [];

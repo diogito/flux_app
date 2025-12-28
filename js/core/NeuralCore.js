@@ -1,3 +1,4 @@
+import { Supabase } from './SupabaseClient.js';
 import { CreateMLCEngine } from "https://esm.run/@mlc-ai/web-llm";
 
 // Using Qwen2-1.5B for maximum mobile compatibility (~1GB VRAM, High Speed)
@@ -36,12 +37,32 @@ export class NeuralCore {
     }
 
     /**
-     * The True AI Analysis
+     * The True AI Analysis (RAG Enabled)
      */
-    async analyzeState(energyLevel, tags, note, historyContext = "") {
+    async analyzeState(energyLevel, tags, note, localHistory = "") {
         // [FIX] Fail fast if engine is broken (prevent hang)
         if (!this.isReady || !this.engine) {
             throw new Error("Neural Engine not ready");
+        }
+
+        // 1. Fetch Long-Term Memory (RAG)
+        let longTermContext = "";
+        try {
+            console.log("🧠 NeuralCore: Fetching RAG from Supabase...");
+            const dbHistory = await Supabase.getHistory(20); // Get last 20 events
+            if (dbHistory && dbHistory.length > 0) {
+                longTermContext = dbHistory.map(e => {
+                    const date = new Date(e.timestamp).toLocaleDateString();
+                    // Handle variable payload structures
+                    const p = e.data || {};
+                    return `[${date}] Type: ${e.type} | Info: ${JSON.stringify(p)}`;
+                }).join('\n');
+            } else {
+                longTermContext = "No long-term history available.";
+            }
+        } catch (e) {
+            console.warn("RAG Fetch Failed, using local context:", e);
+            longTermContext = localHistory; // Fallback
         }
 
         const systemPrompt = `You are an AI Biometric Analyst. Determine 'Energy Context'.
@@ -51,9 +72,11 @@ export class NeuralCore {
         - expansion (>70%)
         
         Output JSON: { "context": "string", "reasoning": "string", "actionable_tip": "string" }
-        `;
+        
+        LONG TERM MEMORY (Patterns):
+        ${longTermContext}`;
 
-        const userPrompt = `Energy: ${energyLevel}%. Tags: ${tags.join(',')}. Note: ${note}. History: ${historyContext}`;
+        const userPrompt = `Energy: ${energyLevel}%. Tags: ${tags.join(',')}. Note: ${note}.`;
 
         const response = await this.engine.chat.completions.create({
             messages: [
