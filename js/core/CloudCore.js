@@ -1,4 +1,4 @@
-export const API_BASE = 'http://localhost:8000/api';
+import { API_BASE_URL } from '../config.js';
 
 export class CloudCoreService {
 
@@ -6,7 +6,7 @@ export class CloudCoreService {
         console.log("☁️ Calling Cloud Synapse...");
 
         try {
-            const response = await fetch(`${API_BASE}/neural-bridge`, {
+            const response = await fetch(`${API_BASE_URL}/api/neural-bridge`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -37,7 +37,7 @@ export class CloudCoreService {
 
     static async generateMicroCoaching(habitName, energyLevel) {
         try {
-            const response = await fetch(`${API_BASE}/neural-bridge`, {
+            const response = await fetch(`${API_BASE_URL}/api/neural-bridge`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -58,7 +58,7 @@ export class CloudCoreService {
 
     static async generateDailySummary(profile, dayData, history) {
         try {
-            const response = await fetch(`${API_BASE}/neural-bridge`, {
+            const response = await fetch(`${API_BASE_URL}/api/neural-bridge`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
