@@ -6,7 +6,12 @@ const STORAGE_KEY = 'flux_state_v1';
 
 const defaultState = {
     userProfile: {
-        name: "Viajero",
+        name: null,         // "Xavier"
+        archetype: null,    // "Creator"
+        chronotype: null,   // "morning" | "afternoon" | "evening"
+        northStar: null,    // "Build the future"
+        email: null,        // For Auth
+        id: null,           // Supabase UUID
         onboardingCompleted: false
     },
     today: {
@@ -60,6 +65,19 @@ class Store {
             reasoning: "Heuristic Fallback (Neural Core Offline)",
             actionable_tip: "Escucha a tu cuerpo."
         }, tags, note);
+    }
+
+    // -- Identity Actions (Sprint 25) --
+    updateProfile(data) {
+        this.state.userProfile = { ...this.state.userProfile, ...data };
+        this.save();
+        AnalyticsDB.logEvent('PROFILE_UPDATE', data);
+    }
+
+    linkIdentity(authData) {
+        this.state.userProfile.email = authData.email;
+        this.state.userProfile.id = authData.id;
+        this.save();
     }
 
     // -- True AI State Setter --

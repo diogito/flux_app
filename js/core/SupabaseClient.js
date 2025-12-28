@@ -23,6 +23,38 @@ class SupabaseService {
         }
     }
 
+    // -- AUTH (Sprint 25) --
+    async signInWithOtp(email) {
+        if (!this.ready) return { error: "Supabase not ready" };
+        const { data, error } = await this.client.auth.signInWithOtp({ email });
+        return { data, error };
+    }
+
+    async getUser() {
+        if (!this.ready) return null;
+        const { data: { user } } = await this.client.auth.getUser();
+        return user;
+    }
+
+    // -- PROFILE --
+    async upsertProfile(profileData) {
+        if (!this.ready) return;
+
+        // Ensure we have a user ID (either from arg or session)
+        const user = await this.getUser();
+        if (!user && !profileData.id) return; // Can't sync without ID
+
+        const id = profileData.id || user.id;
+
+        const { error } = await this.client.from('profiles').upsert({
+            id: id,
+            updated_at: new Date(),
+            ...profileData
+        });
+
+        if (error) console.error("Profile Sync Error", error);
+    }
+
     // -- HABITS --
     async getHabits() {
         if (!this.ready) return [];

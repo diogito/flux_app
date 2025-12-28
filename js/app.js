@@ -21,8 +21,19 @@ console.log("Flux OS Booting...");
 const app = document.getElementById('app');
 
 function init() {
-    render();
-    store.subscribe(render);
+    // [SPRINT 25] Genesis Protocol
+    if (!store.state.userProfile || !store.state.userProfile.onboardingCompleted) {
+        console.log("🌌 Initiating Genesis Protocol...");
+        import('./ui/GenesisModal.js').then(m => {
+            m.showGenesisModal(() => {
+                render();
+                store.subscribe(render);
+            });
+        });
+    } else {
+        render();
+        store.subscribe(render);
+    }
 }
 
 function render(state) {
@@ -364,9 +375,11 @@ function renderDashboard(state, db) {
             if (c === 'expansion') return "A Conquistar";
             if (c === 'maintenance') return "Ritmo Constante";
 
-            if (h < 12) return "Buenos Días";
-            if (h < 20) return "Buenas Tardes";
-            return "Buenas Noches";
+            const name = state.userProfile.name || "Viajero";
+
+            if (h < 12) return `Buenos Días, ${name}`;
+            if (h < 20) return `Buenas Tardes, ${name}`;
+            return `Buenas Noches, ${name}`;
         })()}
                         </h1>
                     </div>
