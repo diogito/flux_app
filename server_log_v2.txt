@@ -1,0 +1,37 @@
+🚀 Launching Flux App Server...
+🧹 Cleaning up old processes...
+✅ Loading configuration...
+--------------------------------
+🧠 AI Provider: ollama
+🔗 Ollama URL:  http://192.168.1.178:11434/api/chat
+--------------------------------
+127.0.0.1 - - [28/Dec/2025 00:55:35] code 502, message AI Error: 404 - {"error":"model 'llama3' not found"}
+127.0.0.1 - - [28/Dec/2025 00:55:35] "POST /api/neural-bridge HTTP/1.1" 502 -
+127.0.0.1 - - [28/Dec/2025 01:04:15] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:04:15] code 404, message File not found
+127.0.0.1 - - [28/Dec/2025 01:04:15] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 -
+127.0.0.1 - - [28/Dec/2025 01:04:15] "GET /css/main.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:04:15] "GET /css/components.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:04:15] "GET /css/immersion.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:04:15] "GET /js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:04:15] "GET /css/variables.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:04:15] "GET /js/store.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:04:15] "GET /js/ui/EnergySlider.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:04:15] "GET /js/core/HabitsDB.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:04:15] "GET /js/ui/HabitList.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:04:15] "GET /js/ui/NegotiationModal.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:04:15] "GET /js/ui/WeeklyReportModal.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:04:15] "GET /js/core/InsightEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:04:15] "GET /js/core/NeuralCore.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:04:15] "GET /js/core/CloudCore.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:04:15] "GET /js/core/AnalyticsDB.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:04:15] "GET /js/ui/HabitForm.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:04:15] "GET /js/core/EnergyEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:04:15] "GET /js/core/WeeklyAnalysis.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:04:15] "GET /js/ui/particles.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:04:15] "GET /js/ui/NeuralChain.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:04:15] "GET /js/ui/FocusSession.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:04:16] code 404, message File not found
+127.0.0.1 - - [28/Dec/2025 01:04:16] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [28/Dec/2025 01:04:34] "POST /api/neural-bridge HTTP/1.1" 200 -
+Terminado                  python3 server.py 8081

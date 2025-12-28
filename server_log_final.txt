@@ -5,6 +5,4 @@
 🧠 AI Provider: ollama
 🔗 Ollama URL:  http://192.168.1.178:11434/api/chat
 --------------------------------
-127.0.0.1 - - [28/Dec/2025 00:54:42] code 502, message AI Error: HTTP Error 404: Not Found
-127.0.0.1 - - [28/Dec/2025 00:54:42] "POST /api/neural-bridge HTTP/1.1" 502 -
-Terminado                  python3 server.py 8081
+127.0.0.1 - - [28/Dec/2025 01:05:55] "POST /api/neural-bridge HTTP/1.1" 200 -
