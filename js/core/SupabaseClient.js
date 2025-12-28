@@ -53,6 +53,17 @@ class SupabaseService {
         });
 
         if (error) console.error("Profile Sync Error", error);
+        if (error) console.error("Profile Sync Error", error);
+    }
+
+    async getProfile(userId) {
+        if (!this.ready) return null;
+        const { data, error } = await this.client.from('profiles').select('*').eq('id', userId).single();
+        if (error) {
+            console.error("Profile Fetch Error", error);
+            return null;
+        }
+        return data;
     }
 
     // -- HABITS --

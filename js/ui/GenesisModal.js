@@ -80,44 +80,56 @@ export function showGenesisModal(onComplete) {
         document.head.appendChild(style);
     }
 
-    const steps = [
+    // Step 0: Origin Selection
+    let steps = [
+        {
+            id: 'origin',
+            text: "Sistema Flux Conectado.",
+            sub: "Elige tu camino.",
+            type: 'select',
+            options: [
+                { val: 'new', label: 'Iniciar Nueva Consciencia' },
+                { val: 'login', label: 'Restaurar Enlace (Login)' }
+            ],
+            field: 'origin'
+        },
         {
             id: 'designation',
-            text: "Sistema Flux Iniciado. Identifique al Operador.",
+            text: "Identifique al Operador.",
             sub: "¿Quién eres?",
             placeholder: "Ej: Xavier",
             field: 'name'
         },
         {
             id: 'archetype',
-            text: "Definiendo Parámetros de Personalidad.",
-            sub: "¿Cuál es tu Título o Arquetipo?",
-            placeholder: "Ej: El Arquitecto, La Creadora",
+            text: "Definiendo Parámetros.",
+            sub: "¿Cuál es tu Arquetipo?",
+            placeholder: "Ej: El Creador",
             field: 'archetype'
         },
         {
             id: 'chronotype',
-            text: "Calibrando Ciclos Biológicos.",
-            sub: "¿Cuál es tu momento de mayor energía?",
+            text: "Calibrando Ciclos.",
+            sub: "¿Momento de mayor energía?",
             type: 'select',
             options: [
-                { val: 'morning', label: 'Mañana (Alondra)' },
-                { val: 'afternoon', label: 'Tarde (Normal)' },
-                { val: 'night', label: 'Noche (Búho)' }
+                { val: 'morning', label: 'Mañana' },
+                { val: 'afternoon', label: 'Tarde' },
+                { val: 'night', label: 'Noche' }
             ],
             field: 'chronotype'
         },
         {
             id: 'northstar',
-            text: "Estableciendo Directiva Principal.",
-            sub: "¿Cuál es tu gran objetivo actual?",
-            placeholder: "Ej: Lanzar mi startup",
+            text: "Directiva Principal.",
+            sub: "¿Cuál es tu gran objetivo?",
+            placeholder: "Ej: Crear el futuro",
             field: 'northStar'
         },
         {
             id: 'auth',
-            text: "Sincronización Neural (Opcional).",
-            sub: "Ingresa tu email para respaldo en la nube.",
+            text: "Sincronización Neural.",
+            sub: "Ingresa tu email para respaldo.",
             placeholder: "email@ejemplo.com",
             field: 'email',
             skippable: true
@@ -133,7 +145,7 @@ export function showGenesisModal(onComplete) {
         let inputHTML = '';
         if (step.type === 'select') {
             inputHTML = `
-                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 1rem;">
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 1rem; flex-wrap: wrap;">
                     ${step.options.map(opt => `
                         <button class="genesis-btn" data-val="${opt.val}" style="border-color: var(--text-muted); color: var(--text-muted);">
                             ${opt.label}
@@ -160,7 +172,7 @@ export function showGenesisModal(onComplete) {
             </div>
         `;
 
-        // Logic
+        // Bind Events
         if (step.type === 'select') {
             const btns = modal.querySelectorAll('button[data-val]');
             btns.forEach(b => b.onclick = () => next(step.field, b.getAttribute('data-val')));
@@ -179,63 +191,33 @@ export function showGenesisModal(onComplete) {
     };
 
     const next = async (field, value) => {
+        // Step 0: Branching Logic
+        if (field === 'origin') {
+            if (value === 'login') {
+                // Switch to Login Flow
+                steps = [
+                    steps[0], // Keep origin history technically
+                    {
+                        id: 'login-email',
+                        text: "Restaurar Enlace.",
+                        sub: "Ingresa tu email registrado.",
+                        placeholder: "email@ejemplo.com",
+                        field: 'email_login'
+                    }
+                ];
+                currentStep = 1; // Jump to email
+                renderStep();
+                return;
+            }
+            // Else 'new', just continue
+        }
+
         if (value) tempProfile[field] = value;
 
-        // Special Logic for Auth
-        if (field === 'email' && value) {
-            const btn = document.getElementById('btn-next');
-            const input = document.getElementById('genesis-input');
-
-            if (btn) { btn.innerText = "Enviando Enlace..."; btn.disabled = true; }
-            if (input) input.disabled = true;
-
-            const { error } = await Supabase.signInWithOtp(value);
-
-            if (error) {
-                alert("Error de envío: " + error.message);
-                if (btn) { btn.innerText = "Reintentar"; btn.disabled = false; }
-                if (input) input.disabled = false;
-                return;
-            } else {
-                // Show Verification State
-                modal.innerHTML = `
-                    <div class="genesis-content">
-                        <div class="genesis-avatar-lg" style="animation: none; opacity: 1; border: 2px solid var(--accent-cyan);"></div>
-                        <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--accent-cyan);">Enlace Enviado</h2>
-                        <p style="color: var(--text-muted); margin-bottom: 1rem;">
-                            Hemos enviado un enlace mágico a <strong>${value}</strong>.<br>
-                            Revísalo en tu dispositivo para confirmar.
-                        </p>
-                        
-                        <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 10px;">
-                            <button id="btn-check-auth" class="genesis-btn">Ya verifiqué mi correo</button>
-                            <button id="btn-skip-auth" style="background:none; border:none; color: #666; cursor: pointer; margin-top: 10px;">Entrar sin verificar por ahora</button>
-                        </div>
-                    </div>
-                `;
-
-                document.getElementById('btn-check-auth').onclick = async () => {
-                    const btnCheck = document.getElementById('btn-check-auth');
-                    btnCheck.innerText = "Verificando...";
-
-                    // Check Session
-                    const user = await Supabase.getUser();
-                    if (user) {
-                        tempProfile.id = user.id;
-                        tempProfile.email = user.email; // Ensure correct email
-                        alert("¡Identidad Confirmada!");
-                        finish();
-                    } else {
-                        alert("Aún no detectamos la sesión. Asegúrate de hacer clic en el enlace del correo.");
-                        btnCheck.innerText = "Ya verifiqué mi correo";
-                    }
-                };
-
-                document.getElementById('btn-skip-auth').onclick = () => {
-                    finish();
-                };
-                return; // Stop here, don't increment step
-            }
+        // Auth Logic (For both 'New' step 'auth' OR 'Login' step 'email_login')
+        if ((field === 'email' || field === 'email_login') && value) {
+            await handleAuth(value, field === 'email_login');
+            return; // Stop rendering here, handleAuth takes over
         }
 
         currentStep++;
@@ -246,15 +228,81 @@ export function showGenesisModal(onComplete) {
         }
     };
 
+    const handleAuth = async (email, isLogin) => {
+        const btn = document.getElementById('btn-next');
+        const input = document.getElementById('genesis-input');
+
+        if (btn) { btn.innerText = "Enviando Enlace..."; btn.disabled = true; }
+        if (input) input.disabled = true;
+
+        const { error } = await Supabase.signInWithOtp(email);
+
+        if (error) {
+            alert("Error: " + error.message);
+            if (btn) { btn.innerText = "Reintentar"; btn.disabled = false; }
+            if (input) input.disabled = false;
+            return;
+        }
+
+        // Show Verification
+        modal.innerHTML = `
+            <div class="genesis-content">
+                <div class="genesis-avatar-lg" style="animation: none; opacity: 1; border: 2px solid var(--accent-cyan);"></div>
+                <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--accent-cyan);">Enlace Enviado</h2>
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">
+                    Revisa tu correo (${email}) y haz clic en el enlace mágico.
+                </p>
+                <div style="margin-top: 2rem;">
+                    <button id="btn-check-auth" class="genesis-btn">Ya verifiqué mi correo</button>
+                    ${!isLogin ? `<button id="btn-skip-auth" style="background:none; border:none; color: #666; margin-top:10px; cursor: pointer;">Saltar por ahora</button>` : ''}
+                </div>
+            </div>
+        `;
+
+        document.getElementById('btn-check-auth').onclick = async () => {
+            const btnCheck = document.getElementById('btn-check-auth');
+            btnCheck.innerText = "Sincronizando...";
+
+            // Check Session
+            const user = await Supabase.getUser();
+            if (user) {
+                tempProfile.id = user.id;
+                tempProfile.email = user.email;
+
+                // If Login, Fetch Profile Data
+                if (isLogin) {
+                    const profileData = await Supabase.getProfile(user.id);
+                    if (profileData) {
+                        Object.assign(tempProfile, profileData); // Merge cloud data
+                        alert(`Bienvenido de vuelta, ${tempProfile.name || 'Viajero'}.`);
+                    } else {
+                        alert("Sesión iniciada, pero no encontramos datos previos. Creando nuevo perfil local.");
+                    }
+                } else {
+                    alert("¡Identidad Confirmada!");
+                }
+                finish();
+            } else {
+                alert("Aún no detectamos la sesión. Por favor usa el enlace del correo primero.");
+                btnCheck.innerText = "Ya verifiqué mi correo";
+            }
+        };
+
+        if (!isLogin) {
+            document.getElementById('btn-skip-auth').onclick = () => finish();
+        }
+    };
+
     const finish = () => {
         tempProfile.onboardingCompleted = true;
         store.updateProfile(tempProfile);
 
-        // Sync to Cloud if we have email (even if not verified yet, we can try, but really we need session. 
-        // Logic: Upsert requires ID. If we just did OTP, we don't have ID until they click link.
-        // So we just save local for now.
+        // Sync new profile to cloud if authenticated
+        if (tempProfile.id) {
+            Supabase.upsertProfile(tempProfile);
+        }
 
-        // Exit Animation
+        // Exit
         modal.style.opacity = '0';
         setTimeout(() => {
             modal.remove();
