@@ -66,6 +66,17 @@ class Store {
         this.save();
     }
 
+    // Force a specific context regardless of energy (The "Override")
+    setContextOverride(context) {
+        this.state.today.energyContext = context;
+        this.save();
+
+        AnalyticsDB.logEvent('CONTEXT_OVERRIDE', {
+            forcedContext: context,
+            energyLevel: this.state.today.energyLevel
+        });
+    }
+
     resetDay() {
         this.state.today = {
             date: new Date().toISOString().split('T')[0],

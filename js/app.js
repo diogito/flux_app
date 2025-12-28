@@ -2,6 +2,7 @@ import { store } from './store.js';
 import { EnergySlider } from './ui/EnergySlider.js';
 import { HabitsDB } from './core/HabitsDB.js';
 import { HabitList } from './ui/HabitList.js';
+import { showNegotiationModal } from './ui/NegotiationModal.js';
 
 // Expose for Components
 window.fluxStore = store;
@@ -38,7 +39,30 @@ function renderCheckIn() {
     app.innerHTML = '<div id="energy-view" class="view-center"></div>';
 
     const slider = new EnergySlider('energy-view', (val) => {
+        const previousContext = store.state.today.energyContext;
+
+        // 1. Commit new energy physics
         store.setEnergy(val);
+
+        const newContext = store.state.today.energyContext;
+
+        // 2. AI Negotiation Trigger
+        // Only trigger if we are DROPPING into Survival mode and weren't there before
+        if (newContext === 'survival' && previousContext !== 'survival') {
+            console.log("Triggering Negotiation...");
+            showNegotiationModal(
+                store.state.habits,
+                // On Accept: Do nothing, we remain in natural survival mode
+                () => {
+                    console.log("Negotiation Accepted: Survival Mode active.");
+                },
+                // On Override: Force Maintenance
+                () => {
+                    console.log("Negotiation Overridden: Forcing Maintenance.");
+                    store.setContextOverride('maintenance');
+                }
+            );
+        }
     });
 
     slider.render();
