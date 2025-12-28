@@ -80,7 +80,17 @@ function renderCheckIn() {
         try {
             // 2. Wake up the Brain (Lazy Load)
             await NeuralCoreService.init((msg) => {
-                progress.innerText = msg;
+                // Humanize the technical logs
+                let friendlyMsg = "Conectando...";
+                if (msg.includes("Fetching")) friendlyMsg = "Descargando conocimiento... (Solo la 1ª vez)";
+                if (msg.includes("Loading")) friendlyMsg = "Cargando modelo neuronal...";
+                if (msg.includes("completed")) friendlyMsg = "Córtex listo.";
+
+                // Keep percentage if present
+                const percent = msg.match(/\[.*?\]/);
+                if (percent) friendlyMsg += ` ${percent[0]}`;
+
+                progress.innerText = friendlyMsg;
             });
 
             progress.innerText = "Analizando psicometría...";
