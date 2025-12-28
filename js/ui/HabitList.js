@@ -13,9 +13,23 @@ export class HabitList {
         if (!this.container) return;
 
         // Get completed IDs from global store (source of truth)
+        // Get completed IDs from global store (source of truth)
         const completedIds = window.fluxStore ? (window.fluxStore.state.today.completedHabits || []) : [];
 
-        const html = this.habits.map(habit => {
+        // -- ADAPTIVE SCHEDULING (Sprint 10) --
+        const sortedHabits = [...this.habits].sort((a, b) => {
+            const durA = (a.levels[this.context] || a.levels['maintenance']).duration;
+            const durB = (b.levels[this.context] || b.levels['maintenance']).duration;
+
+            // Survival: Shortest First (Momentum)
+            if (this.context === 'survival') return durA - durB;
+            // Expansion: Longest First (Impact)
+            if (this.context === 'expansion') return durB - durA;
+
+            return 0; // Default
+        });
+
+        const html = sortedHabits.map(habit => {
             const variation = habit.levels[this.context] || habit.levels['maintenance'];
             const text = variation ? variation.text : habit.title;
             const duration = variation ? variation.duration : 0;
