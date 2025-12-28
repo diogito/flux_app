@@ -7,7 +7,10 @@
     <title>Flux | OS</title>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/immersion.css">
+    <link rel="stylesheet" href="css/avatar.css">
+    <link rel="icon" type="image/png" href="assets/icon-192.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,8 +18,29 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Outfit:wght@200;300;500;700&display=swap"
         rel="stylesheet">
 
+    <!-- Import Map for Vanilla JS Modules -->
+    <script type="importmap">
+        {
+            "imports": {
+                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.39.0"
+            }
+        }
+    </script>
+
     <!-- PWA -->
     <meta name="theme-color" content="#0a0a0a">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(() => console.log('📡 Flux OS Service Worker Registered'))
+                .catch(err => console.error('SW Error:', err));
+        }
+    </script>
 </head>
 
 <body>
