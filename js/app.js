@@ -72,10 +72,19 @@ function renderCheckIn() {
     }
 
     const slider = new EnergySlider('energy-view', async (val, tags, note) => {
+        // Fallback Check: If AI crashed before, don't try again this session
+        if (window.fluxDisableNeural) {
+            console.log("Neural Core disabled due to previous error. Using fallback.");
+            store.setEnergy(val, tags, note);
+            return;
+        }
+
         // 1. Show Neural Interface
         const overlay = document.getElementById('neural-status');
         const progress = document.getElementById('neural-progress');
         overlay.style.display = 'flex';
+        progress.style.color = 'var(--text-muted)';
+        progress.innerText = "Conectando córtex...";
 
         try {
             // 2. Wake up the Brain (Lazy Load)
@@ -100,16 +109,24 @@ function renderCheckIn() {
             console.log("🧠 Neural Decision:", analysis);
 
             // 4. Commit to Store
-            // We pass the AI's decision directly, bypassing the rigid EnergyEngine rules
-            store.setNeuralState(val, analysis);
+            store.setNeuralState(val, analysis, tags, note);
+
+            // Hide overlay immediately on success
+            overlay.style.display = 'none';
 
         } catch (err) {
             console.error("Neural Failure:", err);
-            // Show specific error for debugging (e.g. "WebGPU not supported")
-            alert(`Error de Córtex: ${err.message || err}. Usando modo manual.`);
-            store.setEnergy(val, tags, note); // Fallback to heuristic
-        } finally {
-            overlay.style.display = 'none';
+
+            // Graceful Error Handling
+            window.fluxDisableNeural = true; // Don't crash again
+            progress.style.color = 'var(--accent-orange, #f97316)';
+            progress.innerText = "⚠️ Córtex inestable. Activando protocolo manual...";
+
+            // Wait 2s so user sees the message
+            setTimeout(() => {
+                store.setEnergy(val, tags, note); // Fallback to heuristic
+                overlay.style.display = 'none';
+            }, 2500);
         }
     });
 
