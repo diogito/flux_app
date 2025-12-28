@@ -3,6 +3,7 @@ import { EnergySlider } from './ui/EnergySlider.js';
 import { HabitsDB } from './core/HabitsDB.js';
 import { HabitList } from './ui/HabitList.js';
 import { showNegotiationModal } from './ui/NegotiationModal.js';
+import { InsightEngine } from './core/InsightEngine.js';
 
 // Expose for Components
 window.fluxStore = store;
@@ -38,6 +39,36 @@ function renderCheckIn() {
     // Clean slate for Check-in
     app.innerHTML = '<div id="energy-view" class="view-center"></div>';
 
+    // 0. AI Forecast Check
+    const forecast = InsightEngine.generateForecast();
+    let forecastHtml = '';
+
+    if (forecast) {
+        const color = forecast.type === 'warning' ? 'var(--accent-orange, #f97316)' : 'var(--accent-violet)';
+        const icon = forecast.type === 'warning' ? '🛡️' : '🚀';
+
+        forecastHtml = `
+            <div class="fade-in-up" style="
+                margin-bottom: 2rem; 
+                background: rgba(255,255,255,0.05); 
+                border-left: 3px solid ${color};
+                padding: 1rem; 
+                border-radius: 8px;
+                text-align: left;
+                width: 100%;
+                display: flex;
+                gap: 12px;
+                align-items: center;
+            ">
+                <span style="font-size: 1.5rem;">${icon}</span>
+                <div>
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Flux Insight</div>
+                    <div style="font-size: 0.9rem; color: #fff; line-height: 1.4;">${forecast.message}</div>
+                </div>
+            </div>
+        `;
+    }
+
     const slider = new EnergySlider('energy-view', (val) => {
         const previousContext = store.state.today.energyContext;
 
@@ -47,16 +78,13 @@ function renderCheckIn() {
         const newContext = store.state.today.energyContext;
 
         // 2. AI Negotiation Trigger
-        // Only trigger if we are DROPPING into Survival mode and weren't there before
         if (newContext === 'survival' && previousContext !== 'survival') {
             console.log("Triggering Negotiation...");
             showNegotiationModal(
                 store.state.habits,
-                // On Accept: Do nothing, we remain in natural survival mode
                 () => {
                     console.log("Negotiation Accepted: Survival Mode active.");
                 },
-                // On Override: Force Maintenance
                 () => {
                     console.log("Negotiation Overridden: Forcing Maintenance.");
                     store.setContextOverride('maintenance');
@@ -66,6 +94,19 @@ function renderCheckIn() {
     });
 
     slider.render();
+
+    // Post-render Injection of Forecast
+    if (forecastHtml) {
+        const container = document.getElementById('energy-view');
+        // We inject it into the wrapper created by EnergySlider
+        const wrapper = container.querySelector('.energy-slider-wrapper');
+        if (wrapper) {
+            const temp = document.createElement('div');
+            temp.innerHTML = forecastHtml;
+            // Insert after the H2
+            wrapper.insertBefore(temp.firstElementChild, wrapper.querySelector('h2').nextElementSibling);
+        }
+    }
 }
 
 function renderDashboard(state, db) {
