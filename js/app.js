@@ -76,6 +76,7 @@ function renderCheckIn() {
                 display: flex;
                 gap: 12px;
                 align-items: center;
+                justify-content: center;
             ">
                 <span style="font-size: 1.5rem;">${icon}</span>
                 <div>
@@ -97,69 +98,102 @@ function renderCheckIn() {
         // 1. Show Neural Interface
         const overlay = document.getElementById('neural-status');
         const progress = document.getElementById('neural-progress');
-        overlay.style.display = 'flex';
-        progress.style.color = 'var(--text-muted)';
-        progress.innerText = "Conectando córtex...";
+        const title = document.getElementById('neural-title'); // Assuming this exists in index.html now
+        const core = document.querySelector('.synapse-core');
+
+        if (overlay) overlay.classList.remove('hidden');
+        if (progress) {
+            progress.innerText = "Conectando córtex...";
+            progress.style.color = 'var(--text-muted)';
+        }
+        if (core) core.classList.remove('thinking');
 
         try {
-            // 2. Wake up the Brain (Lazy Load)
-            await NeuralCoreService.init((msg) => {
-                // Humanize the technical logs
-                let friendlyMsg = "Conectando...";
-                if (msg.includes("Fetching")) friendlyMsg = "Descargando conocimiento... (Solo la 1ª vez)";
-                if (msg.includes("Loading")) friendlyMsg = "Cargando modelo neuronal...";
-                if (msg.includes("completed")) friendlyMsg = "Córtex listo.";
+            // Allow UI to paint the overlay before freezing the thread
+            setTimeout(async () => {
+                try {
+                    // 2. Wake up the Brain (Lazy Load)
+                    await NeuralCoreService.init((msg) => {
+                        // Humanize the technical logs
+                        let friendlyMsg = "Conectando...";
+                        if (msg.includes("Fetching")) friendlyMsg = "Descargando conocimiento... (Solo la 1ª vez)";
+                        if (msg.includes("Loading")) {
+                            friendlyMsg = "Cargando modelo neuronal (Llama 3)...";
+                            if (core) core.classList.add('thinking');
+                        }
+                        if (msg.includes("completed")) friendlyMsg = "Córtex listo.";
 
-                // Keep percentage if present
-                const percent = msg.match(/\[.*?\]/);
-                if (percent) friendlyMsg += ` ${percent[0]}`;
+                        // Keep percentage if present
+                        const percent = msg.match(/\[.*?\]/);
+                        if (percent) friendlyMsg += ` ${percent[0]}`;
 
-                progress.innerText = friendlyMsg;
-            });
+                        if (progress) progress.innerText = friendlyMsg;
+                    });
 
-            progress.innerText = "Analizando psicometría...";
+                    proceedWithAnalysis();
+                } catch (e) { handleAiError(e); }
+            }, 50);
 
-            // 3. Ask the AI (Edge First) + RAG (Memory)
-            const history = AnalyticsDB.getRecentEnergyContext(5); // Last 5 days
-            console.log("📜 RAG Context:", history);
+            // Split logic to avoid nesting hell
+            const proceedWithAnalysis = async () => {
+                if (progress) progress.innerText = "Analizando psicometría...";
+                if (title) title.innerText = "Procesando";
+                if (core) core.classList.add('thinking');
 
-            const analysis = await NeuralCoreService.analyzeState(val, tags, note, history);
-            console.log("🧠 Neural Decision:", analysis);
+                // 3. Ask the AI (Edge First) + RAG (Memory)
+                const history = AnalyticsDB.getRecentEnergyContext(5); // Last 5 days
+                console.log("📜 RAG Context:", history);
 
-            // 4. Commit to Store
-            store.setNeuralState(val, analysis, tags, note);
-            overlay.style.display = 'none';
+                const analysis = await NeuralCoreService.analyzeState(val, tags, note, history);
+                console.log("🧠 Neural Decision:", analysis);
+
+                // 4. Commit to Store
+                store.setNeuralState(val, analysis, tags, note);
+                if (overlay) overlay.classList.add('hidden');
+            };
+
+            const handleAiError = async (err) => {
+                console.warn("⚠️ Neural Core Failed. Attempting Cloud Bridge...", err);
+
+                // -- CLOUD BRIDGE PROTOCOL --
+                if (title) title.innerText = "Enlace Remoto";
+                if (progress) {
+                    progress.innerText = "⚠️ Error Local. Conectando Nube...";
+                    progress.style.color = 'var(--accent-cyan)'; // Blue for Cloud
+                }
+                if (core) core.classList.add('thinking');
+
+                try {
+                    // 3b. Ask the Cloud (Plan B)
+                    const history = AnalyticsDB.getRecentEnergyContext(5);
+                    const cloudAnalysis = await CloudCoreService.analyzeState(val, tags, note, history);
+                    console.log("☁️ Cloud Decision:", cloudAnalysis);
+
+                    store.setNeuralState(val, cloudAnalysis, tags, note);
+                    if (overlay) overlay.classList.add('hidden');
+
+                } catch (cloudErr) {
+                    console.error("🔥 Total Failure (Edge + Cloud):", cloudErr);
+
+                    // -- TOTAL FALLBACK (Heuristic) --
+                    if (progress) {
+                        progress.style.color = 'var(--text-warning, #fca5a5)';
+                        progress.innerText = "⚠️ Sin conexión. Activando Modo Manual...";
+                    }
+                    if (core) core.classList.remove('thinking');
+
+                    window.fluxDisableNeural = true; // Stop trying
+
+                    setTimeout(() => {
+                        store.setEnergy(val, tags, note);
+                        if (overlay) overlay.classList.add('hidden');
+                    }, 1500);
+                }
+            };
 
         } catch (err) {
-            console.warn("⚠️ Neural Core Failed. Attempting Cloud Bridge...", err);
-
-            // -- CLOUD BRIDGE PROTOCOL --
-            progress.innerText = "⚠️ Error Local. Conectando Nube...";
-            progress.style.color = 'var(--accent-cyan)'; // Blue for Cloud
-
-            try {
-                // 3b. Ask the Cloud (Plan B)
-                const history = AnalyticsDB.getRecentEnergyContext(5);
-                const cloudAnalysis = await CloudCoreService.analyzeState(val, tags, note, history);
-                console.log("☁️ Cloud Decision:", cloudAnalysis);
-
-                store.setNeuralState(val, cloudAnalysis, tags, note);
-                overlay.style.display = 'none';
-
-            } catch (cloudErr) {
-                console.error("🔥 Total Failure (Edge + Cloud):", cloudErr);
-
-                // -- TOTAL FALLBACK (Heuristic) --
-                progress.style.color = 'var(--text-warning, #fca5a5)';
-                progress.innerText = "⚠️ Sin conexión. Activando Modo Manual...";
-
-                window.fluxDisableNeural = true; // Stop trying
-
-                setTimeout(() => {
-                    store.setEnergy(val, tags, note);
-                    overlay.style.display = 'none';
-                }, 1500);
-            }
+            // This catch block might not catch async errors inside setTimeout, handled by handleAiError
+            console.error("Unexpected error in slider callback:", err);
         }
     });
 

@@ -37,7 +37,7 @@ export class EnergySlider {
                     <span>Expansión</span>
                 </div>
 
-                <button id="btnStart">Siguiente</button>
+                <button id="btnStart" class="primary-btn">Siguiente</button>
             </div>
         `;
 
@@ -68,7 +68,7 @@ export class EnergySlider {
                     margin-bottom: 2rem;
                 "></textarea>
 
-                <button id="btnConfirmJournal">Iniciar Día</button>
+                <button id="btnConfirmJournal" class="primary-btn">Iniciar Día</button>
             </div>
         `;
 
@@ -80,13 +80,22 @@ export class EnergySlider {
             };
         });
 
-        document.getElementById('btnConfirmJournal').onclick = () => {
+        const btnConfirm = document.getElementById('btnConfirmJournal');
+        btnConfirm.onclick = () => {
+            // UI Feedback (Immediate)
+            btnConfirm.innerText = "Iniciando...";
+            btnConfirm.disabled = true;
+            btnConfirm.style.opacity = "0.7";
+
             const noteText = document.getElementById('journalNote').value;
             const tags = Array.from(this.container.querySelectorAll('.tag-btn.active')).map(b => b.innerText);
 
-            // Format for persistence: "[Tag1, Tag2] Note text" (Legacy support in store if needed, but we prefer structured)
-            // Passing (value, tags, noteText)
-            if (this.onComplete) this.onComplete(this.value, tags, noteText);
+            // Give UI a moment to repaint before heavy lifting
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    if (this.onComplete) this.onComplete(this.value, tags, noteText);
+                }, 50);
+            });
         };
     }
 
