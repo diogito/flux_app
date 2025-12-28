@@ -36,24 +36,16 @@ export class NeuralCore {
      * The True AI Analysis
      * Replaces deterministic if/else with semantic reasoning.
      */
-    async analyzeState(energyLevel, tags, note) {
-        if (!this.engine) throw new Error("Cortex not initialized");
+    async analyzeState(energyLevel, tags, note, historyContext = "") {
+        if (!this.engine) throw new Error("Brain not initialized");
 
-        const prompt = `
-        You are Flux, an advanced behavioral psychologist AI. 
-        Your goal is to decide the optimal "Operating Mode" for the user based on their biological and psychological state.
-
-        DATA:
-        - Energy Level (Physiological): ${energyLevel}/100
-        - Reported Tags: ${tags.join(', ')}
+        // Construct the prompt with RAG Context
+        const userPrompt = `
+        Current State:
+        - Energy: ${energyLevel}%
+        - Tags: ${tags.join(', ')}
         - User Note: "${note}"
 
-        DEFINITIONS:
-        - Survival Mode: User is exhausted, sick, or blocked. Goal: Minimal effort, easy wins.
-        - Maintenance Mode: User is okay. Goal: Consistency, standard routine.
-        - Expansion Mode: User is peak state. Goal: Challenges, deep work.
-
-        INSTRUCTIONS:
         Analyze the conflict between the energy level and the note (e.g., low energy but high motivation, or high energy but sick).
         Prioritize safety and long-term consistency.
         

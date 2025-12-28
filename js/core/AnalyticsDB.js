@@ -40,9 +40,26 @@ export const AnalyticsDB = {
     // Returns array of objects compatible with Chain Viz
     getChainData(habitId, days = 7) {
         const history = this.getHistory(habitId);
-        // In a real app, we'd fill in missing dates with "missed" status.
-        // For MVP, we just return the raw completions to map.
         return history.slice(0, days);
+    },
+
+    // -- RAG: Context Retrieval --
+    getRecentEnergyContext(days = 7) {
+        const events = this._getAll();
+        const cutoff = Date.now() - (days * 24 * 60 * 60 * 1000);
+
+        return events
+            .filter(e =>
+                (e.type === 'NEURAL_CHECK_IN' || e.type === 'ENERGY_CHECK_IN') &&
+                e.timestamp > cutoff
+            )
+            .sort((a, b) => b.timestamp - a.timestamp) // Newest first
+            .map(e => {
+                const date = new Date(e.timestamp).toLocaleDateString('es-ES', { weekday: 'short' });
+                const tags = e.payload.tags ? e.payload.tags.join(',') : '';
+                return `[${date}] E:${e.payload.level}% (${tags}) Note: "${e.payload.note || ''}"`;
+            })
+            .join('\n'); // Return as a clean text block for the LLM
     },
 
     // -- Private --

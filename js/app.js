@@ -105,8 +105,11 @@ function renderCheckIn() {
 
             progress.innerText = "Analizando psicometría...";
 
-            // 3. Ask the AI (Edge First)
-            const analysis = await NeuralCoreService.analyzeState(val, tags, note);
+            // 3. Ask the AI (Edge First) + RAG (Memory)
+            const history = AnalyticsDB.getRecentEnergyContext(5); // Last 5 days
+            console.log("📜 RAG Context:", history);
+
+            const analysis = await NeuralCoreService.analyzeState(val, tags, note, history);
             console.log("🧠 Neural Decision:", analysis);
 
             // 4. Commit to Store
@@ -122,7 +125,8 @@ function renderCheckIn() {
 
             try {
                 // 3b. Ask the Cloud (Plan B)
-                const cloudAnalysis = await CloudCoreService.analyzeState(val, tags, note);
+                const history = AnalyticsDB.getRecentEnergyContext(5);
+                const cloudAnalysis = await CloudCoreService.analyzeState(val, tags, note, history);
                 console.log("☁️ Cloud Decision:", cloudAnalysis);
 
                 store.setNeuralState(val, cloudAnalysis, tags, note);

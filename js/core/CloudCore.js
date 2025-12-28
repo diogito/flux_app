@@ -3,7 +3,7 @@ export const CloudCoreService = {
      * Fallback Analysis via Cloud API
      * Used when WebGPU is not available.
      */
-    async analyzeState(energyLevel, tags, note) {
+    async analyzeState(energyLevel, tags, note, historyContext = "") {
         console.log("☁️ CloudCore: Contacting Mother Ship...");
 
         try {
@@ -17,6 +17,7 @@ export const CloudCoreService = {
                     energy_level: energyLevel,
                     semantic_tags: tags,
                     journal_note: note,
+                    history_context: historyContext, // [NEW] RAG
                     client_timestamp: Date.now()
                 })
             });
