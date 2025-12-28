@@ -1,75 +1,103 @@
+import { EnergyEngine } from '../core/EnergyEngine.js';
+
 export class EnergySlider {
     constructor(containerId, onCommit) {
         this.container = document.getElementById(containerId);
-        this.onCommit = onCommit;
-        this.value = 50;
+        this.onChange = onCommit;
     }
 
     render() {
-        this.container.innerHTML = `
-            <div class="energy-slider-container fade-in">
-                <span id="energyDisplay" class="energy-value">50%</span>
-                <input type="range" min="0" max="100" value="50" class="energy-slider" id="sliderInput">
-                
-                <p id="energyLabel" style="margin-top: 1rem; color: var(--text-secondary); height: 1.5rem;">Modo Mantenimiento</p>
+        if (!this.container) return;
 
-                <button id="btnCommit" style="
-                    margin-top: 3rem;
-                    background: var(--bg-card);
-                    border: 1px solid rgba(255,255,255,0.2);
-                    color: white;
+        this.container.innerHTML = `
+            <div class="energy-slider-wrapper fade-in">
+                <h2 style="font-family: var(--font-display); margin-bottom: 2rem;">¿Cómo está tu batería?</h2>
+                
+                <div class="slider-display">
+                    <span id="sliderValue" class="slider-value">50%</span>
+                </div>
+                
+                <div id="somatic-label" style="
+                    margin-bottom: 2rem;
+                    height: 24px;
+                    color: var(--accent-cyan);
+                    font-size: 0.9rem;
+                    font-weight: 500;
+                    letter-spacing: 0.5px;
+                    opacity: 0.8;
+                ">Estable • Respiración normal</div>
+
+                <input type="range" id="sliderInput" min="1" max="100" value="50" class="slider-input">
+                
+                <div class="slider-labels" style="margin-top: 1rem; display: flex; justify-content: space-between; color: var(--text-muted); font-size: 0.8rem;">
+                    <span>Supervivencia</span>
+                    <span>Expansión</span>
+                </div>
+
+                <!-- Guidance for user -->
+                <p style="margin-top: 2rem; color: var(--text-muted); font-size: 0.8rem; max-width: 300px; margin-left: auto; margin-right: auto;">
+                    Escucha a tu cuerpo. La IA ajustará tus hábitos según tu respuesta.
+                </p>
+                
+                <button id="btnStart" style="
+                    margin-top: 2rem;
+                    background: var(--text-primary);
+                    color: var(--bg-primary);
+                    border: none;
                     padding: 1rem 3rem;
-                    border-radius: var(--radius-full);
-                    font-size: 1rem;
+                    border-radius: 2rem;
+                    font-weight: bold;
                     cursor: pointer;
-                    transition: all 0.2s;
+                    transition: transform 0.2s;
                 ">Iniciar Día</button>
             </div>
         `;
 
-        this.bindEvents();
-    }
-
-    bindEvents() {
+        // Logic
         const slider = document.getElementById('sliderInput');
-        const display = document.getElementById('energyDisplay');
-        const label = document.getElementById('energyLabel');
-        const btn = document.getElementById('btnCommit');
+        const display = document.getElementById('sliderValue');
+        const somatic = document.getElementById('somatic-label');
+        const btn = document.getElementById('btnStart');
 
-        // Initial Feedback
-        this.updateFeedback(this.value, label, slider);
+        // Initial State
+        this.updateVisuals(slider.value, display, slider, somatic);
 
-        // Real-time updates
+        // Event: Input (Drag)
         slider.addEventListener('input', (e) => {
-            this.value = parseInt(e.target.value);
-            display.textContent = `${this.value}%`;
-            this.updateFeedback(this.value, label, slider);
+            this.updateVisuals(e.target.value, display, slider, somatic);
         });
 
-        // Commit logic
+        // Event: Change (Release) - Commit value
+        slider.addEventListener('change', (e) => {
+            if (this.onChange) this.onChange(parseInt(e.target.value));
+        });
+
+        // Event: Button Click
         btn.addEventListener('click', () => {
-            this.onCommit(this.value);
+            // Ensure final value is committed if not already
+            if (this.onChange) this.onChange(parseInt(slider.value));
         });
     }
 
-    updateFeedback(val, labelNode, sliderNode) {
-        // We could import EnergyEngine here, or keep it responsive/client-side only.
-        // For 60fps smoothness during drag, keeping it self-contained is effective.
+    updateVisuals(val, display, slider, somatic) {
+        display.textContent = `${val}%`;
 
-        let color, text;
-        if (val <= 35) {
-            color = 'var(--accent-blue)';
-            text = "Modo Supervivencia 🛡️";
-        } else if (val <= 70) {
-            color = 'var(--accent-violet)';
-            text = "Modo Mantenimiento ⚖️";
-        } else {
-            color = 'var(--accent-cyan)';
-            text = "Modo Expansión 🚀";
+        // Dynamic Color Logic
+        let color = '#fff';
+        if (val <= 30) color = 'var(--accent-cyan)'; // Survival
+        if (val >= 70) color = 'var(--accent-violet)'; // Expansion
+
+        display.style.color = color;
+        slider.style.setProperty('--thumb-color', color);
+        slider.style.boxShadow = `0 0 20px ${color}33`; // Add glow with opacity
+
+        // Somatic Update
+        if (somatic) {
+            const label = EnergyEngine.getSomaticLabel(val);
+            if (somatic.textContent !== label) {
+                somatic.textContent = label;
+                somatic.style.color = color;
+            }
         }
-
-        labelNode.textContent = text;
-        labelNode.style.color = color;
-        sliderNode.style.boxShadow = `0 0 20px ${color}`;
     }
 }

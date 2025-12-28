@@ -6,18 +6,32 @@
  */
 
 export class EnergyEngine {
+    /**
+     * Maps energy level to detailed context
+     * @param {number} level 0-100
+     * @returns {string} 'survival' | 'maintenance' | 'expansion'
+     */
     static calculateContext(level) {
         // Sanity check
         if (typeof level !== 'number') return 'maintenance';
 
         // The "Elastic" Logic
-        if (level <= 35) {
-            return 'survival';
-        } else if (level <= 70) {
-            return 'maintenance';
-        } else {
-            return 'expansion';
-        }
+        if (level <= 30) return 'survival';
+        if (level >= 70) return 'expansion';
+        return 'maintenance';
+    }
+
+    /**
+     * Maps energy level to somatic sensations (Interoception Training)
+     * @param {number} level 0-100
+     * @returns {string} Descriptive somatic tags
+     */
+    static getSomaticLabel(level) {
+        if (level <= 20) return "Cuerpo rígido • Niebla mental";
+        if (level <= 40) return "Lentitud • Pesadez";
+        if (level <= 60) return "Estable • Respiración normal";
+        if (level <= 80) return "Alerta • Ligereza";
+        return "Mente afilada • Ganas de reto";
     }
 
     static getFeedback(level) {
