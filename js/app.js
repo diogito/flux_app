@@ -6,6 +6,7 @@ import { showNegotiationModal } from './ui/NegotiationModal.js';
 import { showWeeklyReport } from './ui/WeeklyReportModal.js';
 import { InsightEngine } from './core/InsightEngine.js';
 import { NeuralCoreService } from './core/NeuralCore.js';
+import { CloudCoreService } from './core/CloudCore.js'; // [NEW] Cloud Bridge
 
 // Expose for Components
 window.fluxStore = store;
@@ -104,34 +105,43 @@ function renderCheckIn() {
 
             progress.innerText = "Analizando psicometría...";
 
-            // 3. Ask the AI
+            // 3. Ask the AI (Edge First)
             const analysis = await NeuralCoreService.analyzeState(val, tags, note);
             console.log("🧠 Neural Decision:", analysis);
 
             // 4. Commit to Store
             store.setNeuralState(val, analysis, tags, note);
-
-            // Hide overlay immediately on success
             overlay.style.display = 'none';
 
         } catch (err) {
-            console.error("Neural Failure:", err);
+            console.warn("⚠️ Neural Core Failed. Attempting Cloud Bridge...", err);
 
-            // Graceful Error Handling
-            window.fluxDisableNeural = true; // Don't crash again
-            progress.style.color = 'var(--text-warning, #fca5a5)';
+            // -- CLOUD BRIDGE PROTOCOL --
+            progress.innerText = "⚠️ Error Local. Conectando Nube...";
+            progress.style.color = 'var(--accent-cyan)'; // Blue for Cloud
 
-            if (err.toString().includes("GPU")) {
-                progress.innerText = "⚠️ GPU no compatible. Activando Modo Ligero...";
-            } else {
-                progress.innerText = "⚠️ Córtex inestable. Activando Modo Ligero...";
-            }
+            try {
+                // 3b. Ask the Cloud (Plan B)
+                const cloudAnalysis = await CloudCoreService.analyzeState(val, tags, note);
+                console.log("☁️ Cloud Decision:", cloudAnalysis);
 
-            // Wait 1.5s so user sees the switch
-            setTimeout(() => {
-                store.setEnergy(val, tags, note); // Fallback to heuristic
+                store.setNeuralState(val, cloudAnalysis, tags, note);
                 overlay.style.display = 'none';
-            }, 1500);
+
+            } catch (cloudErr) {
+                console.error("🔥 Total Failure (Edge + Cloud):", cloudErr);
+
+                // -- TOTAL FALLBACK (Heuristic) --
+                progress.style.color = 'var(--text-warning, #fca5a5)';
+                progress.innerText = "⚠️ Sin conexión. Activando Modo Manual...";
+
+                window.fluxDisableNeural = true; // Stop trying
+
+                setTimeout(() => {
+                    store.setEnergy(val, tags, note);
+                    overlay.style.display = 'none';
+                }, 1500);
+            }
         }
     });
 
