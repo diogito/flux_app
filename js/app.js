@@ -243,7 +243,6 @@ function renderDashboard(state, db) {
 
             <div id="habits-container"></div>
             
-            <!-- STUDIO ACTION BUTTON (Floating) -->
             <button id="btnAddHabit" style="
                 position: fixed;
                 bottom: 24px;
@@ -262,18 +261,6 @@ function renderDashboard(state, db) {
                 justify-content: center;
                 z-index: 100;
             ">+</button>
-
-            <button id="btnReset" style="
-                margin-top: 3rem; 
-                background: transparent; 
-                border: 0; 
-                color: var(--text-muted); 
-                text-decoration: underline; 
-                cursor: pointer;
-                width: 100%;
-                text-align: center;
-                font-size: 0.8rem;
-            ">Reiniciar Día (Demo)</button>
         </div>
     `;
 
@@ -289,7 +276,41 @@ function renderDashboard(state, db) {
             console.log("Removing habit:", id);
             store.removeHabit(id);
         }
-    );
+    // List Render with Delete Callback
+    const list = new HabitList(
+            'habits-container',
+            db.getAll(),
+            state.today.energyContext,
+            (id) => {
+                console.log("Removing habit:", id);
+                store.removeHabit(id);
+            },
+            async (id) => {
+                console.log("Completing habit:", id);
+
+                // 1. Get Habit Info BEFORE completing (so we have title)
+                const habit = db.getAll().find(h => h.id === id);
+
+                // 2. Optimistic Update
+                store.completeHabit(id);
+
+                // 3. AI Coach Trigger (Fire and Forget)
+                if (habit && !window.fluxDisableNeural) {
+                    try {
+                        const energy = state.today.energyLevel;
+                        console.log(`🧠 AI Coach: Analyzing "${habit.title}" at ${energy}% energy...`);
+
+                        const encouragement = await NeuralCoreService.generateMicroCoaching(habit.title, energy);
+
+                        if (encouragement) {
+                            showToast(encouragement);
+                        }
+                    } catch (err) {
+                        console.warn("AI Coach failed:", err);
+                    }
+                }
+            }
+        );
     list.render();
 
     // Bind Add Button (Opens Modal)
@@ -299,11 +320,6 @@ function renderDashboard(state, db) {
             store.addHabit(newHabit);
         });
         form.render();
-    });
-
-    // Bind Reset
-    document.getElementById('btnReset').addEventListener('click', () => {
-        store.resetDay();
     });
 
     // Bind Weekly Report

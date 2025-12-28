@@ -79,6 +79,38 @@ export class NeuralCore {
             };
         }
     }
+    /**
+     * Generates a short, encouraging message when a habit is completed.
+     * Uses extremely short context / output to be fast.
+     */
+    async generateMicroCoaching(habitName, energyLevel) {
+        if (!this.engine) return null;
+
+        const systemPrompt = "You are a motivational coach. Output a single short sentence (max 10 words).";
+        const userPrompt = `User completed habit: "${habitName}". Current Energy: ${energyLevel}%. 
+        If energy is low (<30), praise resilience. 
+        If energy is high (>70), praise flow/momentum. 
+        Otherwise, give generic reinforcement.
+        JSON Output: { "message": "string" }`;
+
+        try {
+            const response = await this.engine.chat.completions.create({
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userPrompt }
+                ],
+                response_format: { type: "json_object" },
+                temperature: 0.7,
+                max_tokens: 50 // Keep it very fast
+            });
+
+            const data = JSON.parse(response.choices[0].message.content);
+            return data.message;
+        } catch (e) {
+            console.warn("Micro-Coaching Failed", e);
+            return null; // Silent fail is fine here
+        }
+    }
 }
 
 export const instance = new NeuralCore();

@@ -142,6 +142,32 @@
 
 .primary-btn:disabled {
     opacity: 0.5;
-    cursor: not-allowed;
     transform: none;
+}
+
+/* Toast Notifications */
+.flux-toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(10, 10, 10, 0.9);
+    border: 1px solid var(--accent-cyan);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 999px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    font-size: 0.9rem;
+    z-index: 10000;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: none;
+    text-align: center;
+    min-width: 200px;
+    backdrop-filter: blur(10px);
+}
+
+.flux-toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
 }

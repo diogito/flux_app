@@ -3,11 +3,12 @@ import { NeuralChain } from './NeuralChain.js';
 import { FocusSession } from './FocusSession.js';
 
 export class HabitList {
-    constructor(containerId, habits, context, onDelete) {
+    constructor(containerId, habits, context, onDelete, onComplete) {
         this.container = document.getElementById(containerId);
         this.habits = habits; // Note: In a real app, we'd need reactive status here
         this.context = context || 'maintenance';
         this.onDelete = onDelete;
+        this.onComplete = onComplete;
     }
 
     render() {
@@ -190,9 +191,13 @@ export class HabitList {
 
                 // Store Update
                 const id = card.dataset.id;
-                if (window.fluxStore) {
+
+                // Allow UI to animate first
+                if (this.onComplete) {
+                    this.onComplete(id);
+                } else if (window.fluxStore) {
+                    // Fallback
                     window.fluxStore.completeHabit(id);
-                    // Re-render handled by store sub
                 }
             }
         };
