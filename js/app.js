@@ -46,7 +46,6 @@ function updateDOM(s, db) {
         }
     } else {
         renderDashboard(s, db); // Pass DB to dashboard
-
         // Re-inject Synapse if coming from neural loading? 
         // No, overlay handles itself.
     }
@@ -202,19 +201,16 @@ function renderCheckIn() {
     // Post-render Injection of Forecast
     if (forecastHtml) {
         const container = document.getElementById('energy-view');
-        // We inject it into the wrapper created by EnergySlider
         const wrapper = container.querySelector('.energy-slider-wrapper');
         if (wrapper) {
             const temp = document.createElement('div');
             temp.innerHTML = forecastHtml;
-            // Insert after the H2
             wrapper.insertBefore(temp.firstElementChild, wrapper.querySelector('h2').nextElementSibling);
         }
     }
 }
 
 function renderDashboard(state, db) {
-    // Basic innerHTML patch
     app.innerHTML = `
         <div class="view-dashboard fade-in">
             <header style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-end;">
@@ -275,42 +271,33 @@ function renderDashboard(state, db) {
         (id) => {
             console.log("Removing habit:", id);
             store.removeHabit(id);
-        }
-    // List Render with Delete Callback
-    const list = new HabitList(
-            'habits-container',
-            db.getAll(),
-            state.today.energyContext,
-            (id) => {
-                console.log("Removing habit:", id);
-                store.removeHabit(id);
-            },
-            async (id) => {
-                console.log("Completing habit:", id);
+        },
+        async (id) => {
+            console.log("Completing habit:", id);
 
-                // 1. Get Habit Info BEFORE completing (so we have title)
-                const habit = db.getAll().find(h => h.id === id);
+            // 1. Get Habit Info BEFORE completing (so we have title)
+            const habit = db.getAll().find(h => h.id === id);
 
-                // 2. Optimistic Update
-                store.completeHabit(id);
+            // 2. Optimistic Update
+            store.completeHabit(id);
 
-                // 3. AI Coach Trigger (Fire and Forget)
-                if (habit && !window.fluxDisableNeural) {
-                    try {
-                        const energy = state.today.energyLevel;
-                        console.log(`🧠 AI Coach: Analyzing "${habit.title}" at ${energy}% energy...`);
+            // 3. AI Coach Trigger (Fire and Forget)
+            if (habit && !window.fluxDisableNeural) {
+                try {
+                    const energy = state.today.energyLevel;
+                    console.log(`🧠 AI Coach: Analyzing "${habit.title}" at ${energy}% energy...`);
 
-                        const encouragement = await NeuralCoreService.generateMicroCoaching(habit.title, energy);
+                    const encouragement = await NeuralCoreService.generateMicroCoaching(habit.title, energy);
 
-                        if (encouragement) {
-                            showToast(encouragement);
-                        }
-                    } catch (err) {
-                        console.warn("AI Coach failed:", err);
+                    if (encouragement) {
+                        showToast(encouragement);
                     }
+                } catch (err) {
+                    console.warn("AI Coach failed:", err);
                 }
             }
-        );
+        }
+    );
     list.render();
 
     // Bind Add Button (Opens Modal)
@@ -333,3 +320,25 @@ function renderDashboard(state, db) {
 
 // Start
 init();
+
+// --- UI Utilities ---
+function showToast(msg) {
+    let toast = document.querySelector('.flux-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.className = 'flux-toast';
+        document.body.appendChild(toast);
+    }
+
+    toast.innerText = msg;
+
+    // Animation Frame to ensure transition
+    requestAnimationFrame(() => {
+        toast.classList.add('visible');
+    });
+
+    // Hide after 3s
+    setTimeout(() => {
+        toast.classList.remove('visible');
+    }, 3000);
+}
