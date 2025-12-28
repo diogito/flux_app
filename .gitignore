@@ -1,0 +1,14 @@
+
+# Logs
+*.log
+nohup.out
+
+# Dependencies & Binaries
+node_modules/
+cloudflared
+__pycache__/
+
+# System
+.DS_Store
+
+# Config (if sensitive, but flux_config.env is used for non-committed var)
