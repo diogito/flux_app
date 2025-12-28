@@ -129,8 +129,12 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(json.dumps(response_payload).encode('utf-8'))
 
+            except urllib.error.HTTPError as e:
+                err_body = e.read().decode('utf-8')
+                print(f"❌ AI Provider HTTP Error ({provider}): {e.code} - {err_body}")
+                self.send_error(502, f"AI Error: {e.code} - {err_body}")
             except Exception as e:
-                print(f"AI Provider Error ({provider}): {e}")
+                print(f"❌ AI Provider Error ({provider}): {e}")
                 self.send_error(502, f"AI Error: {str(e)}")
 
         else:
