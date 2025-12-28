@@ -251,6 +251,7 @@ export function showGenesisModal(onComplete) {
                 <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--accent-cyan);">Enlace Enviado</h2>
                 <p style="color: var(--text-muted); margin-bottom: 1rem;">
                     Revisa tu correo (${email}) y haz clic en el enlace mágico.
+                    <br><small style="color: var(--accent-violet); margin-top: 8px; display: block;">Escuchando confirmación...</small>
                 </p>
                 <div style="margin-top: 2rem;">
                     <button id="btn-check-auth" class="genesis-btn">Ya verifiqué mi correo</button>
@@ -259,6 +260,16 @@ export function showGenesisModal(onComplete) {
             </div>
         `;
 
+        // [NEW] Cross-Tab Sync Listener
+        const { data: authListener } = Supabase.client.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_IN' && session) {
+                console.log("⚡ Auth Event Detected:", event);
+                // Auto-advance
+                handleLoginSuccess(session.user, isLogin);
+            }
+        });
+
+        // Manual Check Button
         document.getElementById('btn-check-auth').onclick = async () => {
             const btnCheck = document.getElementById('btn-check-auth');
             btnCheck.innerText = "Sincronizando...";
@@ -266,22 +277,8 @@ export function showGenesisModal(onComplete) {
             // Check Session
             const user = await Supabase.getUser();
             if (user) {
-                tempProfile.id = user.id;
-                tempProfile.email = user.email;
-
-                // If Login, Fetch Profile Data
-                if (isLogin) {
-                    const profileData = await Supabase.getProfile(user.id);
-                    if (profileData) {
-                        Object.assign(tempProfile, profileData); // Merge cloud data
-                        alert(`Bienvenido de vuelta, ${tempProfile.name || 'Viajero'}.`);
-                    } else {
-                        alert("Sesión iniciada, pero no encontramos datos previos. Creando nuevo perfil local.");
-                    }
-                } else {
-                    alert("¡Identidad Confirmada!");
-                }
-                finish();
+                authListener.subscription.unsubscribe(); // Cleanup
+                handleLoginSuccess(user, isLogin);
             } else {
                 alert("Aún no detectamos la sesión. Por favor usa el enlace del correo primero.");
                 btnCheck.innerText = "Ya verifiqué mi correo";
@@ -289,8 +286,36 @@ export function showGenesisModal(onComplete) {
         };
 
         if (!isLogin) {
-            document.getElementById('btn-skip-auth').onclick = () => finish();
+            document.getElementById('btn-skip-auth').onclick = () => {
+                authListener.subscription.unsubscribe(); // Cleanup
+                finish();
+            };
         }
+    };
+
+    const handleLoginSuccess = async (user, isLogin) => {
+        tempProfile.id = user.id;
+        tempProfile.email = user.email;
+
+        // If Login, Fetch Profile Data
+        if (isLogin) {
+            const profileData = await Supabase.getProfile(user.id);
+            if (profileData) {
+                Object.assign(tempProfile, profileData); // Merge cloud data
+
+                // [FIX] Force Reset Context to ensure User Check-in
+                store.state.today.energyLevel = null;
+                store.state.today.energyContext = null;
+                store.save();
+
+                alert(`Bienvenido de vuelta, ${tempProfile.name || 'Viajero'}.`);
+            } else {
+                alert("Sesión iniciada, pero no encontramos datos previos. Creando nuevo perfil local.");
+            }
+        } else {
+            alert("¡Identidad Confirmada!");
+        }
+        finish();
     };
 
     const finish = () => {
