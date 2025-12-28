@@ -72,8 +72,8 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
                         method="POST"
                     )
                     
-                    # Set timeout to 5 seconds to prevent hanging
-                    with urllib.request.urlopen(req, timeout=5) as f:
+                    # Set timeout to 60 seconds to allow for Model Cold Start (Loading into VRAM)
+                    with urllib.request.urlopen(req, timeout=60) as f:
                         response_body = f.read().decode('utf-8')
                         ollama_data = json.loads(response_body)
                         # Ollama returns content in 'message.content'
