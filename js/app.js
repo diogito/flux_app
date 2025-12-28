@@ -4,16 +4,16 @@ import { HabitsDB } from './core/HabitsDB.js';
 import { HabitList } from './ui/HabitList.js';
 import { showNegotiationModal } from './ui/NegotiationModal.js';
 import { showWeeklyReport } from './ui/WeeklyReportModal.js';
-import { showSettings } from './ui/SettingsModal.js'; // [NEW] Import Settings
+import { showSettings } from './ui/SettingsModal.js';
+import { showDailySummary } from './ui/DailySummaryModal.js'; // [NEW] Summary UI
 import { InsightEngine } from './core/InsightEngine.js';
 import { NeuralCoreService } from './core/NeuralCore.js';
-import { CloudCoreService } from './core/CloudCore.js'; // Cloud Bridge
-import { AnalyticsDB } from './core/AnalyticsDB.js'; // [FIX] Missing Import
+import { CloudCoreService } from './core/CloudCore.js';
+import { AnalyticsDB } from './core/AnalyticsDB.js';
+import { HabitForm } from './ui/HabitForm.js';
 
 // Expose for Components
 window.fluxStore = store;
-
-import { HabitForm } from './ui/HabitForm.js'; // Import the new Studio
 
 console.log("Flux OS Booting...");
 
@@ -246,6 +246,9 @@ function renderDashboard(state, db) {
                 </div>
                 <div class="battery-indicator" style="text-align: right; display: flex; flex-direction: column; align-items: flex-end;">
                     <div style="display: flex; align-items: center; gap: 1rem;">
+                        <!-- [NEW] End of Day Button -->
+                        <button id="btnEndDay" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.7;" title="Cerrar el día">🌙</button>
+
                         <button id="btnWeeklyReport" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.8;">📊</button>
                         <span style="font-size: 1.5rem; font-weight: bold;">${state.today.energyLevel}%</span>
                     </div>
@@ -340,17 +343,17 @@ function renderDashboard(state, db) {
         });
     }
 
-    // [NEW] Bind Settings Button
+    // Bind Settings Button
     const btnSettings = document.getElementById('btnSettings');
     if (btnSettings) {
         btnSettings.addEventListener('click', () => {
             showSettings(
-                // Export Action
+                // Export
                 () => {
                     const data = {
                         profile: store.state.userProfile,
                         habits: store.state.habits,
-                        history: AnalyticsDB.getAllEvents() // Grab all raw events
+                        history: AnalyticsDB.getAllEvents()
                     };
                     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
                     const url = URL.createObjectURL(blob);
@@ -365,12 +368,65 @@ function renderDashboard(state, db) {
 
                     showToast("✅ Datos exportados correctamente");
                 },
-                // Reset Action
+                // Reset
                 () => {
                     localStorage.clear();
                     window.location.reload();
                 }
             );
+        });
+    }
+
+    // [NEW] Bind End of Day - COMPLETE LOGIC
+    const btnEndDay = document.getElementById('btnEndDay');
+    if (btnEndDay) {
+        btnEndDay.addEventListener('click', async () => {
+            if (!confirm("¿Cerrar el día? Esto generará tu resumen y reiniciará tu energía para mañana.")) return;
+
+            showToast("🌙 Generando resumen del día...");
+
+            // Gather Data
+            const profile = store.state.userProfile;
+            const history = AnalyticsDB.getRecentEnergyContext(5);
+            const dayData = {
+                energyLevel: state.today.energyLevel,
+                energyContext: state.today.energyContext,
+                totalHabits: db.getAll().length,
+                completedHabits: db.getAll().filter(h => h.completed),
+                note: state.today.note
+            };
+
+            // Call AI
+            let message = "Descansa bien para mañana. Buen trabajo."; // Fallback
+            try {
+                // Try Local
+                const localMsg = await NeuralCoreService.generateDailySummary(profile, dayData, history);
+                if (localMsg) message = localMsg;
+
+                // Try Cloud if Local failed
+                if (!localMsg) {
+                    const cloudMsg = await CloudCoreService.generateDailySummary(profile, dayData, history);
+                    if (cloudMsg) message = cloudMsg;
+                }
+            } catch (e) { console.error("Summary error", e); }
+
+            // Show Modal
+            showDailySummary({
+                message: message,
+                stats: {
+                    completed: dayData.completedHabits.length,
+                    total: dayData.totalHabits,
+                    energy: dayData.energyLevel
+                }
+            }, () => {
+                // On Close/Reset:
+                store.state.today.energyLevel = null;
+                store.state.today.energyContext = null;
+                store.state.habits.forEach(h => h.completed = false);
+
+                store.save();
+                window.location.reload();
+            });
         });
     }
 }
@@ -388,13 +444,9 @@ function showToast(msg) {
     }
 
     toast.innerText = msg;
-
-    // Animation Frame to ensure transition
     requestAnimationFrame(() => {
         toast.classList.add('visible');
     });
-
-    // Hide after 3s
     setTimeout(() => {
         toast.classList.remove('visible');
     }, 3000);
