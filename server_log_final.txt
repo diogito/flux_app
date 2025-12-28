@@ -6,3 +6,57 @@
 🔗 Ollama URL:  http://192.168.1.178:11434/api/chat
 --------------------------------
 127.0.0.1 - - [28/Dec/2025 01:05:55] "POST /api/neural-bridge HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET /css/main.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET /css/components.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET /css/immersion.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET /js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] code 404, message File not found
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET /css/variables.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET /js/store.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET /js/ui/EnergySlider.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET /js/core/HabitsDB.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET /js/ui/HabitList.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET /js/ui/NegotiationModal.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET /js/ui/WeeklyReportModal.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET /js/core/InsightEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET /js/core/NeuralCore.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET /js/core/CloudCore.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET /js/core/AnalyticsDB.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET /js/ui/HabitForm.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET /js/core/EnergyEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET /js/core/WeeklyAnalysis.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET /js/ui/particles.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET /js/ui/NeuralChain.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET /js/ui/FocusSession.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:17] code 404, message File not found
+127.0.0.1 - - [28/Dec/2025 01:12:17] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [28/Dec/2025 01:12:21] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:21] code 404, message File not found
+127.0.0.1 - - [28/Dec/2025 01:12:21] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 -
+127.0.0.1 - - [28/Dec/2025 01:12:21] "GET /css/main.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:21] "GET /css/components.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:21] "GET /css/immersion.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:21] "GET /js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:21] "GET /css/variables.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:21] "GET /js/store.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:21] "GET /js/ui/EnergySlider.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:21] "GET /js/core/HabitsDB.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:21] "GET /js/ui/HabitList.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:21] "GET /js/ui/NegotiationModal.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:21] "GET /js/ui/WeeklyReportModal.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:21] "GET /js/core/InsightEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:21] "GET /js/core/NeuralCore.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:21] "GET /js/core/CloudCore.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:21] "GET /js/core/AnalyticsDB.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:21] "GET /js/ui/HabitForm.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:21] "GET /js/core/EnergyEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:21] "GET /js/core/WeeklyAnalysis.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:21] "GET /js/ui/particles.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:21] "GET /js/ui/NeuralChain.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:21] "GET /js/ui/FocusSession.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:12:22] code 404, message File not found
+127.0.0.1 - - [28/Dec/2025 01:12:22] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [28/Dec/2025 01:13:00] "POST /api/neural-bridge HTTP/1.1" 200 -
+127.0.0.1 - - [28/Dec/2025 01:14:08] "POST /api/neural-bridge HTTP/1.1" 200 -
