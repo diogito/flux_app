@@ -17,39 +17,55 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
         if self.path == '/api/neural-bridge':
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length)
-            data = json.loads(post_data)
-            
-            # -- ROUTING LOGIC (Hybric AI) --
-            provider = os.environ.get("AI_PROVIDER", "openai").lower()
             
             try:
-                # Common prompt construction
-                energy = data.get('energy_level', 50)
-                tags = data.get('semantic_tags', [])
-                note = data.get('journal_note', '')
-                history = data.get('history_context', 'No history.')
-
-                system_prompt = """
-                You are Flux, an advanced behavioral psychologist AI. 
-                Analyze the user's biological energy and history to decide the optimal "Operating Mode".
+                data = json.loads(post_data)
                 
-                Modes:
-                - Survival (<30%): Minimal effort.
-                - Maintenance (30-70%): Consistency.
-                - Expansion (>70%): Deep work.
-
-                Output JSON ONLY:
-                {
-                    "context": "survival|maintenance|expansion",
-                    "reasoning": "Brief psychological analysis (max 1 sentence). Cite history if relevant.",
-                    "actionable_tip": "One specific micro-habit."
-                }
-                """
-
-                user_msg = f"Energy: {energy}%, Tags: {', '.join(tags)}, Note: {note}, History: {history}"
-
-                response_payload = {}
+                # -- ROUTING LOGIC (Hybrid AI) --
+                req_type = data.get('type', 'analysis')
                 
+                system_prompt = ""
+                user_msg = ""
+                
+                if req_type == 'micro_coaching':
+                    habit = data.get('habitName', 'Task')
+                    energy = data.get('energyLevel', 50)
+                    system_prompt = "You are a motivational coach. Output a single short sentence (max 10 words). JSON Output: { \"message\": \"string\" }"
+                    user_msg = f"User completed: {habit}. Energy: {energy}%. Praise them."
+                else:
+                    # Default Analysis
+                    energy = data.get('energy_level', 50)
+                    tags = data.get('semantic_tags', [])
+                    note = data.get('journal_note', '')
+                    history = data.get('history_context', 'No history.')
+                    
+                    system_prompt = """
+                    You are Flux, an advanced behavioral psychologist AI. 
+                    Analyze the user's biological energy and history to decide the optimal "Operating Mode".
+                    
+                    Modes:
+                    - Survival (<30%): Minimal effort.
+                    - Maintenance (30-70%): Consistency.
+                    - Expansion (>70%): Deep work.
+
+                    Output JSON ONLY:
+                    {
+                        "context": "survival|maintenance|expansion",
+                        "reasoning": "Brief psychological analysis (max 1 sentence). Cite history if relevant.",
+                        "actionable_tip": "One specific micro-habit."
+                    }
+                    """
+                    user_msg = f"Energy: {energy}%, Tags: {', '.join(tags)}, Note: {note}, History: {history}"
+
+            except Exception as e:
+                self.send_error(400, f"Bad Request: {str(e)}")
+                return
+
+            # 3. Call AI Provider (Ollama / OpenAI)
+            provider = os.environ.get("AI_PROVIDER", "ollama").lower()
+            response_payload = {}
+
+            try:
                 # --- OPTION A: OLLAMA (Local Home Server) ---
                 if provider == "ollama":
                     model_name = os.environ.get("OLLAMA_MODEL", "llama3")
@@ -72,18 +88,23 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
                         method="POST"
                     )
                     
-                    # Set timeout to 60 seconds to allow for Model Cold Start (Loading into VRAM)
-                    with urllib.request.urlopen(req, timeout=60) as f:
+                    # Set timeout (short for coaching, long for analysis)
+                    timeout = 10 if req_type == 'micro_coaching' else 60
+                    
+                    with urllib.request.urlopen(req, timeout=timeout) as f:
                         response_body = f.read().decode('utf-8')
                         ollama_data = json.loads(response_body)
                         # Ollama returns content in 'message.content'
                         ai_json = json.loads(ollama_data['message']['content'])
                         
-                        response_payload = {
-                            "status": "success",
-                            "model_used": f"ollama-{model_name}",
-                            "analysis": ai_json
-                        }
+                        if req_type == 'micro_coaching':
+                             response_payload = ai_json # Direct message object
+                        else:
+                            response_payload = {
+                                "status": "success",
+                                "model_used": f"ollama-{model_name}",
+                                "analysis": ai_json
+                            }
                         print("✅ Ollama Response Received!")
 
 
@@ -117,11 +138,14 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
                         openai_data = json.loads(response_body)
                         ai_content = json.loads(openai_data['choices'][0]['message']['content'])
                         
-                        response_payload = {
-                            "status": "success",
-                            "model_used": openai_data['model'],
-                            "analysis": ai_content
-                        }
+                        if req_type == 'micro_coaching':
+                             response_payload = ai_content
+                        else:
+                            response_payload = {
+                                "status": "success",
+                                "model_used": openai_data['model'],
+                                "analysis": ai_content
+                            }
 
                 # Send Final Response
                 self.send_response(200)

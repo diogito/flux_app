@@ -40,5 +40,29 @@ export const CloudCoreService = {
             console.error("☁️ CloudCore Failed:", error);
             throw error; // Re-throw to trigger Heuristic Fallback
         }
+    },
+
+    /**
+     * Micro-Coaching Fallback (Server-side)
+     */
+    async generateMicroCoaching(habitName, energyLevel) {
+        try {
+            const response = await fetch('/api/neural-bridge', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: 'micro_coaching', // Signal to server to use coaching prompt
+                    habitName,
+                    energyLevel
+                })
+            });
+
+            if (!response.ok) return null;
+            const data = await response.json();
+            return data.message;
+        } catch (e) {
+            console.warn("Cloud Coach Failed:", e);
+            return null;
+        }
     }
 };
