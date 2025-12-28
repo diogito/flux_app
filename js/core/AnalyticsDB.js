@@ -31,6 +31,11 @@ export const AnalyticsDB = {
             .sort((a, b) => b.timestamp - a.timestamp); // Newest first
     },
 
+    // For Analysis Engines
+    getAll() {
+        return this._getAll();
+    },
+
     // Get last N days of completions for visual chain
     // Returns array of objects compatible with Chain Viz
     getChainData(habitId, days = 7) {

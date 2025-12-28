@@ -3,6 +3,7 @@ import { EnergySlider } from './ui/EnergySlider.js';
 import { HabitsDB } from './core/HabitsDB.js';
 import { HabitList } from './ui/HabitList.js';
 import { showNegotiationModal } from './ui/NegotiationModal.js';
+import { showWeeklyReport } from './ui/WeeklyReportModal.js';
 import { InsightEngine } from './core/InsightEngine.js';
 
 // Expose for Components
@@ -128,9 +129,11 @@ function renderDashboard(state, db) {
                     ">Modo ${state.today.energyContext}</span>
                     <h1>Hoy</h1>
                 </div>
-                <div class="battery-indicator" style="text-align: right;">
-                    <span style="font-size: 1.5rem; font-weight: bold;">${state.today.energyLevel}%</span>
-                    <br>
+                <div class="battery-indicator" style="text-align: right; display: flex; flex-direction: column; align-items: flex-end;">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <button id="btnWeeklyReport" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.8;">📊</button>
+                        <span style="font-size: 1.5rem; font-weight: bold;">${state.today.energyLevel}%</span>
+                    </div>
                     <small style="color: var(--text-muted);">Batería</small>
                 </div>
             </header>
@@ -199,6 +202,14 @@ function renderDashboard(state, db) {
     document.getElementById('btnReset').addEventListener('click', () => {
         store.resetDay();
     });
+
+    // Bind Weekly Report
+    const btnReport = document.getElementById('btnWeeklyReport');
+    if (btnReport) {
+        btnReport.addEventListener('click', () => {
+            showWeeklyReport();
+        });
+    }
 }
 
 // Start
