@@ -84,10 +84,9 @@ export class EnergySlider {
             const noteText = document.getElementById('journalNote').value;
             const tags = Array.from(this.container.querySelectorAll('.tag-btn.active')).map(b => b.innerText);
 
-            // Format: "[Tag1, Tag2] Note text"
-            const fullNote = tags.length > 0 ? `[${tags.join(', ')}] ${noteText}` : noteText;
-
-            if (this.onComplete) this.onComplete(this.value, fullNote);
+            // Format for persistence: "[Tag1, Tag2] Note text" (Legacy support in store if needed, but we prefer structured)
+            // Passing (value, tags, noteText)
+            if (this.onComplete) this.onComplete(this.value, tags, noteText);
         };
     }
 
