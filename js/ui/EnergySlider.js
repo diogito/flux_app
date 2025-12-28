@@ -11,25 +11,17 @@ export class EnergySlider {
 
         this.container.innerHTML = `
             <div class="energy-slider-wrapper fade-in">
-                <h2 style="font-family: var(--font-display); margin-bottom: 2rem;">¿Cómo está tu batería?</h2>
+                <h2>¿Cómo está tu batería?</h2>
                 
                 <div class="slider-display">
                     <span id="sliderValue" class="slider-value">50%</span>
                 </div>
                 
-                <div id="somatic-label" style="
-                    margin-bottom: 2rem;
-                    height: 24px;
-                    color: var(--accent-cyan);
-                    font-size: 0.9rem;
-                    font-weight: 500;
-                    letter-spacing: 0.5px;
-                    opacity: 0.8;
-                ">Estable • Respiración normal</div>
+                <div id="somatic-label">Estable • Respiración normal</div>
 
                 <input type="range" id="sliderInput" min="1" max="100" value="50" class="slider-input">
                 
-                <div class="slider-labels" style="margin-top: 1rem; display: flex; justify-content: space-between; color: var(--text-muted); font-size: 0.8rem;">
+                <div class="slider-labels">
                     <span>Supervivencia</span>
                     <span>Expansión</span>
                 </div>
@@ -39,17 +31,7 @@ export class EnergySlider {
                     Escucha a tu cuerpo. La IA ajustará tus hábitos según tu respuesta.
                 </p>
                 
-                <button id="btnStart" style="
-                    margin-top: 2rem;
-                    background: var(--text-primary);
-                    color: var(--bg-primary);
-                    border: none;
-                    padding: 1rem 3rem;
-                    border-radius: 2rem;
-                    font-weight: bold;
-                    cursor: pointer;
-                    transition: transform 0.2s;
-                ">Iniciar Día</button>
+                <button id="btnStart">Iniciar Día</button>
             </div>
         `;
 
