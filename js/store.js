@@ -53,17 +53,29 @@ class Store {
     }
 
     // -- Actions --
+    // -- Deterministic Heuristic Fallback --
     setEnergy(level, tags = [], note = '') {
-        this.state.today.energyLevel = level;
-        // The Brain: Use Tags to refine Context (Congruence Check)
-        this.state.today.energyContext = EnergyEngine.calculateContext(level, tags);
+        this.setNeuralState(level, {
+            context: EnergyEngine.calculateContext(level, tags),
+            reasoning: "Heuristic Fallback (Neural Core Offline)",
+            actionable_tip: "Escucha a tu cuerpo."
+        }, tags, note);
+    }
 
-        // Log to Analytics (The Brain)
-        AnalyticsDB.logEvent('ENERGY_CHECK_IN', {
+    // -- True AI State Setter --
+    setNeuralState(level, aiAnalysis, tags = [], note = '') {
+        this.state.today.energyLevel = level;
+        this.state.today.energyContext = aiAnalysis.context; // The LLM decided this!
+        this.state.today.aiReasoning = aiAnalysis.reasoning; // Store the "Why"
+
+        AnalyticsDB.logEvent('NEURAL_CHECK_IN', {
             level,
-            context: this.state.today.energyContext,
+            context: aiAnalysis.context,
+            reasoning: aiAnalysis.reasoning,
+            tip: aiAnalysis.actionable_tip,
             tags,
-            note
+            note,
+            model: "Phi-3-Mini-WebGPU"
         });
 
         this.save();
