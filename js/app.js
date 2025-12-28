@@ -129,7 +129,7 @@ function renderCheckIn() {
                         if (progress) progress.innerText = friendlyMsg;
                     });
 
-                    proceedWithAnalysis();
+                    await proceedWithAnalysis();
                 } catch (e) { handleAiError(e); }
             }, 50);
 
