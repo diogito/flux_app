@@ -281,13 +281,20 @@ function renderDashboard(state, db) {
             // 2. Optimistic Update
             store.completeHabit(id);
 
-            // 3. AI Coach Trigger (Fire and Forget)
-            if (habit && !window.fluxDisableNeural) {
+            // 3. AI Coach Trigger (Hybrid: Local -> Cloud)
+            if (habit) {
                 try {
                     const energy = state.today.energyLevel;
                     console.log(`🧠 AI Coach: Analyzing "${habit.title}" at ${energy}% energy...`);
 
-                    const encouragement = await NeuralCoreService.generateMicroCoaching(habit.title, energy);
+                    // A. Try Local Cortex
+                    let encouragement = await NeuralCoreService.generateMicroCoaching(habit.title, energy);
+
+                    // B. Fallback to Cloud Bridge
+                    if (!encouragement) {
+                        console.log("⚠️ Local Coach unavailable. Calling Mothership...");
+                        encouragement = await CloudCoreService.generateMicroCoaching(habit.title, energy);
+                    }
 
                     if (encouragement) {
                         showToast(encouragement);
