@@ -2,6 +2,10 @@ import { store } from './store.js';
 import { EnergySlider } from './ui/EnergySlider.js';
 import { HabitsDB } from './core/HabitsDB.js';
 import { HabitList } from './ui/HabitList.js';
+
+// Expose for Components
+window.fluxStore = store;
+
 import { HabitForm } from './ui/HabitForm.js'; // Import the new Studio
 
 console.log("Flux OS Booting...");

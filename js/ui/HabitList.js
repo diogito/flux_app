@@ -1,4 +1,5 @@
 import { triggerBurst } from './particles.js';
+import { NeuralChain } from './NeuralChain.js';
 
 export class HabitList {
     constructor(containerId, habits, context, onDelete) {
@@ -46,6 +47,9 @@ export class HabitList {
                         color: var(--text-primary);
                         font-weight: 500;
                     ">${text}</p>
+                    
+                    <!-- Neural Chain Container -->
+                    <div id="chain-${habit.id}" class="neural-chain-container"></div>
                 </div>
 
                 <div class="habit-meta" style="text-align: right;">
@@ -80,6 +84,18 @@ export class HabitList {
 
         this.container.innerHTML = html;
 
+        // Mount Neural Chains
+        this.habits.forEach(habit => {
+            const el = document.getElementById(`chain-${habit.id}`);
+            if (el) {
+                new NeuralChain(habit.id, el).render();
+            }
+        });
+
+        this.attachEvents();
+    }
+
+    attachEvents() {
         // Event Delegation
         this.container.onclick = (e) => {
             // Delete Handle
@@ -101,11 +117,28 @@ export class HabitList {
                 const y = rect.top + rect.height / 2;
                 const color = checkBtn.dataset.color;
 
+                // 1. Trigger Visuals
                 triggerBurst(x, y, color);
-
-                // Toggle Visual State (Mockup)
                 checkBtn.style.background = color;
                 checkBtn.style.border = `2px solid ${color}`;
+
+                // 2. Trigger Logic (Store + Analytics)
+                // We need the ID. The button is sibling to detail but inside the card which has data-id
+                const card = checkBtn.closest('.habit-card');
+                if (card) {
+                    const id = card.dataset.id;
+                    if (window.fluxStore) { // Assuming global expose or import
+                        window.fluxStore.completeHabit(id);
+                        // Re-render chain after slight delay or reactive update? 
+                        // For now, let's just re-render this specific chain instance if we had access, 
+                        // but simpler to let the store update trigger a full re-render eventually.
+                        // But since we are here:
+                        setTimeout(() => {
+                            const chainContainer = document.getElementById(`chain-${id}`);
+                            if (chainContainer) new NeuralChain(id, chainContainer).render();
+                        }, 100);
+                    }
+                }
             }
         };
     }

@@ -1,5 +1,6 @@
 import { EnergyEngine } from './core/EnergyEngine.js';
 import { DEFAULT_HABITS } from './core/HabitsDB.js';
+import { AnalyticsDB } from './core/AnalyticsDB.js';
 
 const STORAGE_KEY = 'flux_state_v1';
 
@@ -29,14 +30,11 @@ class Store {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
             const parsed = JSON.parse(stored);
-            // Ensure habits exist. If empty array (and not intentionally empty), might want defaults.
-            // But for now, if it's undefined or length 0, we re-seed defaults SO the user isn't stuck with empty list.
             if (!parsed.habits || parsed.habits.length === 0) {
                 parsed.habits = DEFAULT_HABITS;
             }
             return { ...defaultState, ...parsed };
         }
-        // First time load: Use Defaults
         return { ...defaultState, habits: DEFAULT_HABITS };
     }
 
@@ -58,6 +56,13 @@ class Store {
     setEnergy(level) {
         this.state.today.energyLevel = level;
         this.state.today.energyContext = EnergyEngine.calculateContext(level);
+
+        // Log to Analytics (The Brain)
+        AnalyticsDB.logEvent('ENERGY_CHECK_IN', {
+            level,
+            context: this.state.today.energyContext
+        });
+
         this.save();
     }
 
@@ -81,6 +86,24 @@ class Store {
         if (!this.state.habits) return;
         this.state.habits = this.state.habits.filter(h => h.id !== habitId);
         this.save();
+    }
+
+    completeHabit(habitId) {
+        // Init if missing
+        if (!this.state.today.completedHabits) this.state.today.completedHabits = [];
+
+        // 1. Update State (Simple View)
+        if (!this.state.today.completedHabits.includes(habitId)) {
+            this.state.today.completedHabits.push(habitId);
+            this.save();
+
+            // 2. Log Rich Analytics (The Brain)
+            AnalyticsDB.logEvent('HABIT_COMPLETED', {
+                habitId,
+                energyLevel: this.state.today.energyLevel,
+                contextUsed: this.state.today.energyContext || 'maintenance'
+            });
+        }
     }
 }
 
