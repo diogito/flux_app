@@ -4,6 +4,7 @@ import { HabitsDB } from './core/HabitsDB.js';
 import { HabitList } from './ui/HabitList.js';
 import { showNegotiationModal } from './ui/NegotiationModal.js';
 import { showWeeklyReport } from './ui/WeeklyReportModal.js';
+import { showSettings } from './ui/SettingsModal.js'; // [NEW] Import Settings
 import { InsightEngine } from './core/InsightEngine.js';
 import { NeuralCoreService } from './core/NeuralCore.js';
 import { CloudCoreService } from './core/CloudCore.js'; // [NEW] Cloud Bridge
