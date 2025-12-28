@@ -60,3 +60,4 @@
 127.0.0.1 - - [28/Dec/2025 01:12:22] "GET /favicon.ico HTTP/1.1" 404 -
 127.0.0.1 - - [28/Dec/2025 01:13:00] "POST /api/neural-bridge HTTP/1.1" 200 -
 127.0.0.1 - - [28/Dec/2025 01:14:08] "POST /api/neural-bridge HTTP/1.1" 200 -
+Terminado                  python3 server.py 8081

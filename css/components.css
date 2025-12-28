@@ -119,9 +119,9 @@
     margin-top: 0.5rem !important;
 }
 
-/* Action Button */
-#btnStart {
-    margin-top: 4rem !important;
+/* Action Button (Reusable) */
+.primary-btn {
+    margin-top: 2rem !important;
     width: 100%;
     max-width: 300px;
     padding: 1.2rem !important;
@@ -131,8 +131,17 @@
     color: #000 !important;
     box-shadow: 0 4px 25px rgba(255, 255, 255, 0.2) !important;
     border-radius: 16px !important;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s ease, opacity 0.3s ease;
 }
 
-#btnStart:active {
+.primary-btn:active {
     transform: scale(0.98);
+}
+
+.primary-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
 }
