@@ -26,9 +26,19 @@ function init() {
 function render(state) {
     const s = state || store.state;
     // We recreate DB on every render to ensure it has latest habits from store
-    // This is not efficient for large apps but fine for MVP
     const db = new HabitsDB(s.habits);
 
+    // View Transition API (Native Chrome/Edge)
+    if (document.startViewTransition) {
+        document.startViewTransition(() => {
+            updateDOM(s, db);
+        });
+    } else {
+        updateDOM(s, db);
+    }
+}
+
+function updateDOM(s, db) {
     // Router Logic
     if (s.today.energyLevel === null) {
         if (!document.getElementById('energy-view')) {
@@ -36,6 +46,9 @@ function render(state) {
         }
     } else {
         renderDashboard(s, db); // Pass DB to dashboard
+
+        // Re-inject Synapse if coming from neural loading? 
+        // No, overlay handles itself.
     }
 }
 

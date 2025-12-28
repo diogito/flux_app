@@ -1,8 +1,9 @@
 :root {
     /* -- Neuro-Bio Palette -- */
-    --bg-deep: #050507;
-    --bg-card: #0a0e14;
-    --bg-glass: rgba(255, 255, 255, 0.03);
+    --bg-deep: #0a0a0a;
+    /* Warmer Deep Black */
+    --bg-card: #121212;
+    --bg-glass: rgba(255, 255, 255, 0.05);
 
     --text-primary: #ffffff;
     --text-secondary: #a0a0a0;

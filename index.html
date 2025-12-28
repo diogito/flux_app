@@ -9,20 +9,30 @@
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/immersion.css">
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Outfit:wght@200;300;500;700&display=swap"
+        rel="stylesheet">
+
     <!-- PWA -->
-    <meta name="theme-color" content="#050507">
+    <meta name="theme-color" content="#0a0a0a">
 </head>
 
 <body>
-    <div id="neural-status" style="
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.9); z-index: 9999;
-        display: none; align-items: center; justify-content: center;
-        flex-direction: column; color: var(--accent-cyan);
-    ">
-        <div style="font-size: 3rem; margin-bottom: 1rem;">🧠</div>
-        <h2 style="margin-bottom: 0.5rem; font-family: var(--font-display);">Inicializando Córtex</h2>
-        <p id="neural-progress" style="color: var(--text-muted); font-size: 0.8rem;">Conectando neuronas...</p>
+    <!-- Neural Synapse Overlay (Premium Loader) -->
+    <div id="neural-status" class="neural-overlay hidden">
+        <div class="synapse-core">
+            <div class="synapse-ring ring-1"></div>
+            <div class="synapse-ring ring-2"></div>
+            <div class="synapse-ring ring-3"></div>
+            <div class="synapse-particles" id="synapse-particles"></div>
+        </div>
+
+        <div class="neural-text-container">
+            <h2 id="neural-title">Conectando Córtex</h2>
+            <p id="neural-progress">Sincronizando...</p>
+        </div>
     </div>
 
     <main id="app"></main>
