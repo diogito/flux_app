@@ -53,14 +53,15 @@ class Store {
     }
 
     // -- Actions --
-    setEnergy(level) {
+    setEnergy(level, note = '') {
         this.state.today.energyLevel = level;
         this.state.today.energyContext = EnergyEngine.calculateContext(level);
 
         // Log to Analytics (The Brain)
         AnalyticsDB.logEvent('ENERGY_CHECK_IN', {
             level,
-            context: this.state.today.energyContext
+            context: this.state.today.energyContext,
+            note // <--- The Cognitive Input
         });
 
         this.save();

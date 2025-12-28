@@ -69,11 +69,11 @@ function renderCheckIn() {
         `;
     }
 
-    const slider = new EnergySlider('energy-view', (val) => {
+    const slider = new EnergySlider('energy-view', (val, note) => {
         const previousContext = store.state.today.energyContext;
 
-        // 1. Commit new energy physics
-        store.setEnergy(val);
+        // 1. Commit new energy physics + Journal Note
+        store.setEnergy(val, note);
 
         const newContext = store.state.today.energyContext;
 
