@@ -1,9 +1,14 @@
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import sys
+import socketserver # [NEW] For threading
 
 import json
 import os
 import urllib.request
+
+# [NEW] Threaded Server to prevent blocking during AI inference
+class ThreadingHTTPServer(socketserver.ThreadingMixIn, HTTPServer):
+    daemon_threads = True
 
 class CORSRequestHandler(SimpleHTTPRequestHandler):
     def end_headers(self):
@@ -30,8 +35,8 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
                 if req_type == 'micro_coaching':
                     habit = data.get('habitName', 'Task')
                     energy = data.get('energyLevel', 50)
-                    system_prompt = "You are a motivational coach. Output a single short sentence (max 10 words). JSON Output: { \"message\": \"string\" }"
-                    user_msg = f"User completed: {habit}. Energy: {energy}%. Praise them."
+                    system_prompt = "You are a motivational coach. Output a single short sentence based on energy level (max 10 words) in SPANISH. JSON Output: { \"message\": \"string\" }"
+                    user_msg = f"User completed: {habit}. Energy: {energy}%. Praise them in Spanish."
                 else:
                     # Default Analysis
                     energy = data.get('energy_level', 50)
@@ -44,15 +49,15 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
                     Analyze the user's biological energy and history to decide the optimal "Operating Mode".
                     
                     Modes:
-                    - Survival (<30%): Minimal effort.
-                    - Maintenance (30-70%): Consistency.
-                    - Expansion (>70%): Deep work.
+                    - survival (<30% energy): Minimal effort.
+                    - maintenance (30-70% energy): Consistency.
+                    - expansion (>70% energy): Deep work.
 
                     Output JSON ONLY:
                     {
                         "context": "survival|maintenance|expansion",
-                        "reasoning": "Brief psychological analysis (max 1 sentence). Cite history if relevant.",
-                        "actionable_tip": "One specific micro-habit."
+                        "reasoning": "Brief psychological analysis (max 1 sentence) in SPANISH. Cite history if relevant.",
+                        "actionable_tip": "One specific micro-habit in SPANISH."
                     }
                     """
                     user_msg = f"Energy: {energy}%, Tags: {', '.join(tags)}, Note: {note}, History: {history}"
@@ -89,8 +94,10 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
                     )
                     
                     # Set timeout (short for coaching, long for analysis)
-                    timeout = 10 if req_type == 'micro_coaching' else 60
+                    # Bumped to 30s to allow for older hardware/CPU inference
+                    timeout = 30 if req_type == 'micro_coaching' else 60
                     
+                    print(f"⏳ Sending to Ollama (Timeout: {timeout}s)...")
                     with urllib.request.urlopen(req, timeout=timeout) as f:
                         response_body = f.read().decode('utf-8')
                         ollama_data = json.loads(response_body)
@@ -166,6 +173,7 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
 
 if __name__ == '__main__':
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8081
-    print(f"Starting Flux Server with COOP/COEP on port {port}...")
+    print(f"Starting Flux Server (Threaded) with COOP/COEP on port {port}...")
     print(f"URL: http://localhost:{port}")
-    HTTPServer(('', port), CORSRequestHandler).serve_forever()
+    # Use Threaded Server
+    ThreadingHTTPServer(('', port), CORSRequestHandler).serve_forever()

@@ -73,7 +73,7 @@ export class NeuralCore {
         // [FIX] Fail fast to allow Cloud Fallback
         if (!this.isReady || !this.engine) return null;
 
-        const systemPrompt = "You are a motivational coach. Output a single short sentence (max 10 words).";
+        const systemPrompt = "You are a motivational coach. Output a single short sentence (max 10 words) in SPANISH.";
         const userPrompt = `User completed habit: "${habitName}". Current Energy: ${energyLevel}%. 
         If energy is low (<30), praise resilience. 
         If energy is high (>70), praise flow/momentum. 

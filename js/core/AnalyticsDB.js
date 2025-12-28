@@ -36,6 +36,11 @@ export const AnalyticsDB = {
         return this._getAll();
     },
 
+    // [NEW] Alias for clarity in Export
+    getAllEvents() {
+        return this._getAll();
+    },
+
     // Get last N days of completions for visual chain
     // Returns array of objects compatible with Chain Viz
     getChainData(habitId, days = 7) {
